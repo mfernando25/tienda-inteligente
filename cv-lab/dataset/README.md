@@ -12,6 +12,25 @@ Todos los archivos de captura se guardan localmente en la laptop del grupo, dent
 - `labels/`: JSON exportados por el generador.
 - `manifests/`: CSV que registra cada recorte y su etiqueta.
 
+## Evaluación posterior del modelo
+
+Además del dataset inicial de entrenamiento, la evaluación del modelo utiliza cinco fotografías nuevas y sus JSON de referencia. No mezclar estos archivos con las capturas 001–015.
+
+~~~text
+iteraciones/
+└── evaluacion_01/
+    ├── entrada/
+    │   ├── captura_031.jpg
+    │   └── ... captura_035.jpg
+    └── referencias/
+        ├── captura_031.json
+        └── ... captura_035.json
+~~~
+
+Para cada anaquel, exporta **Datos JSON** antes de tomar la fotografía y conserva exactamente la misma distribución. Renombra el JPG y el JSON con el mismo identificador, por ejemplo `captura_031.jpg` y `captura_031.json`.
+
+El clasificador recibe solamente los JPG. Una vez terminadas todas las predicciones, el programa abre los JSON para comparar las etiquetas reales con las predichas y calcular las métricas. Los JSON no intervienen en la inferencia.
+
 ## Plan exacto: 15 fotografías de 15 distribuciones diferentes
 
 Cada fotografía debe mostrar una distribución diferente del anaquel. Para cada una debes guardar **dos archivos obligatorios**: la foto JPG de Android y el JSON de esa misma distribución.
