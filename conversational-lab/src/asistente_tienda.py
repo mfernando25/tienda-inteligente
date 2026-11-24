@@ -97,8 +97,9 @@ def train_intent_classifier(dataset_path: Path):
     def create_pipeline():
         return make_pipeline(
             TfidfVectorizer(
-                lowercase=True,
-                strip_accents="unicode",
+                tokenizer=stem_spanish_tokens,
+                token_pattern=None,
+                lowercase=False,
                 ngram_range=(1, 2),
                 sublinear_tf=True,
                 max_features=5000,
