@@ -24,16 +24,18 @@ git pull
 cd cv-lab
 ~~~
 
-Activar el entorno virtual. Si todavía no existe, crearlo e instalar las dependencias:
-
-~~~bash
-source .venv/Scripts/activate
-~~~
+Si la carpeta `.venv/` no existe en esa computadora, crearla. Después, activar el entorno e instalar las dependencias:
 
 ~~~bash
 py -m venv .venv
 source .venv/Scripts/activate
 python -m pip install -r requirements.txt
+~~~
+
+Si `.venv/` ya existe, basta con activarla:
+
+~~~bash
+source .venv/Scripts/activate
 ~~~
 
 ### 2. Copiar las fotografías y sus etiquetas
@@ -75,19 +77,9 @@ Con esto queda listo el modelo que se utilizará en la Iteración 01. Todos los 
 
 Al inicio de esta guía se prepara el dataset a partir de 15 fotografías JPG y sus JSON, y se entrena el modelo HOG + SVM. Después, se utilizará ese modelo para clasificar 15 anaqueles nuevos.
 
-## 1. Actualizar el repositorio
+El repositorio incluye `predecir_anaqueles.py`, que aplica el modelo a un lote de fotografías completas.
 
-Desde Git Bash, en la carpeta raíz del proyecto:
-
-~~~bash
-git pull
-cd cv-lab
-source .venv/Scripts/activate
-~~~
-
-El repositorio ya incluye `predecir_anaqueles.py`, que aplica el modelo a un lote de fotografías completas.
-
-## 2. Crear 15 anaqueles nuevos
+## 1. Crear 15 anaqueles nuevos
 
 Iniciar el generador:
 
@@ -124,7 +116,7 @@ Detener el servidor con `Ctrl + C` y volver a `cv-lab/`:
 cd ../cv-lab
 ~~~
 
-## 3. Ejecutar la clasificación por lotes
+## 2. Ejecutar la clasificación por lotes
 
 Ejecutar:
 
@@ -149,7 +141,7 @@ Si se necesita repetir la misma iteración y reemplazar sus resultados:
 python predecir_anaqueles.py --sobrescribir
 ~~~
 
-## 4. Revisar los resultados
+## 3. Revisar los resultados
 
 El programa crea automáticamente:
 
@@ -178,7 +170,7 @@ cv-lab/salida_ml/iteraciones/iteracion_01/
 
 **Cada fotografía representa un anaquel independiente.** No sumar las cantidades de las 15 fotografías como si fueran un único inventario físico.
 
-## 5. Analizar el comportamiento del modelo
+## 4. Analizar el comportamiento del modelo
 
 Revisar las imágenes anotadas y las carpetas de recortes. Responder:
 
