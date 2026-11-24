@@ -20,9 +20,10 @@ No crear ejercicios aislados ni herramientas que no se reutilicen en el proyecto
 Estado: los grupos completaron la preparación del dataset y el entrenamiento HOG + SVM. Falta cerrar la integración de inferencia sobre anaqueles completos.
 
 Cierre acordado:
-- Recibir 15 fotografías nuevas de anaqueles completos, capturadas con Android.
+- Recibir 15 fotografías JPG nuevas de anaqueles completos, capturadas con Android, en `dataset/iteraciones/iteracion_01/entrada/`.
 - Mantener las ocho categorías e ilustraciones del generador actual, variando las distribuciones y condiciones de captura.
-- Aplicar el modelo existente sin reentrenarlo.
+- Aplicar el modelo existente con `predecir_anaqueles.py`, sin reentrenarlo.
+- No usar JSON del generador como entrada de predicción.
 - Clasificar las 32 posiciones de cada fotografía.
 - Guardar cada recorte en una carpeta según la clase predicha.
 - Generar la imagen anotada y el inventario estimado por fotografía.
