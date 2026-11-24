@@ -124,3 +124,39 @@ python comparar_referencia.py --detecciones salida_cv/detecciones.csv --referenc
 - HOG + SVM constituye una línea base clásica y ligera; puede confundir productos con formas o diseños parecidos.
 - Los 480 recortes no son 480 fotografías independientes: los 32 recortes de una captura comparten iluminación, perspectiva y condiciones de cámara.
 - La siguiente fase, después de evaluar esta línea base, será construir un generador independiente con nuevos diseños visuales para probar qué tanto generaliza el modelo.
+
+
+## 7. Inferencia por lotes sobre anaqueles completos
+
+Después de entrenar el modelo, el programa \`predecir_anaqueles.py\` aplica el clasificador a un conjunto de fotografías JPG nuevas. No necesita JSON del generador y no vuelve a entrenar.
+
+Carpeta de entrada para la primera iteración:
+
+~~~text
+dataset/iteraciones/iteracion_01/entrada/
+~~~
+
+Desde \`cv-lab/\`:
+
+~~~bash
+python predecir_anaqueles.py
+~~~
+
+Por cada fotografía, seleccionar las cuatro esquinas de la cuadrícula 4×8. El programa utiliza la configuración HOG y las clases guardadas con el modelo, clasifica las 32 posiciones y organiza los recortes según la clase predicha.
+
+Los resultados quedan en \`salida_ml/iteraciones/iteracion_01/\`:
+
+- \`anaqueles_anotados/\`: fotografías rectificadas y anotadas.
+- \`recortes_predichos/\`: recortes organizados por clase.
+- \`predicciones.csv\`: una fila por posición.
+- \`inventario_por_foto.csv\` y \`inventario_por_foto.json\`: conteos estimados para cada fotografía.
+
+Cada fotografía representa un anaquel independiente; no sumar los conteos de distintas fotografías como un único inventario físico. Los resultados de una nueva iteración deben guardarse en otra carpeta, sin sobrescribir las iteraciones anteriores.
+
+Para reemplazar los resultados de la misma iteración:
+
+~~~bash
+python predecir_anaqueles.py --sobrescribir
+~~~
+
+La clasificación utiliza solamente el JPG y el modelo. Si se dispone del JSON original como referencia, puede compararse después, pero no se pasa al programa de predicción.
