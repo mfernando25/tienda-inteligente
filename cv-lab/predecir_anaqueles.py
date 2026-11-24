@@ -217,6 +217,43 @@ def compare_with_references(predictions: list[dict], references_dir: Path,
     return compared
 
 
+def build_inventory_summary(predictions: list[dict], annotated_images: list[dict],
+                            class_labels: list[str]) -> dict:
+    """Resume las clases predichas por anaquel para reutilizarlas en la fase conversacional."""
+    predictions_by_capture: dict[str, list[dict]] = defaultdict(list)
+    for row in predictions:
+        predictions_by_capture[row["capture_id"]].append(row)
+
+    annotated_by_capture = {
+        item["capture_id"]: item["path"] for item in annotated_images
+    }
+    shelves = []
+    for capture_id, rows in predictions_by_capture.items():
+        counts = {
+            label: sum(1 for row in rows if row["predicted_class"] == label)
+            for label in class_labels
+        }
+        shelves.append({
+            "capture_id": capture_id,
+            "source_image": rows[0]["source_image"],
+            "total_positions": len(rows),
+            "occupied_predicted": len(rows) - counts.get("empty", 0),
+            "empty_predicted": counts.get("empty", 0),
+            "predicted_counts": counts,
+            "annotated_image": annotated_by_capture.get(capture_id),
+        })
+
+    return {
+        "model": "HOG + SVM",
+        "classification_source": "JPG only; no reference JSON used for predictions",
+        "note": (
+            "Counts are visible shelf positions (facings), not warehouse stock. "
+            "Each photograph is a separate shelf."
+        ),
+        "shelves": shelves,
+    }
+
+
 def calculate_metrics(rows: list[dict], class_labels: list[str]) -> dict:
     matrix = [[0 for _ in class_labels] for _ in class_labels]
     index = {label: number for number, label in enumerate(class_labels)}
@@ -538,6 +575,14 @@ def main() -> int:
                 "capture_id": image_path.stem,
                 "path": annotated_path,
             })
+
+        inventory_summary = build_inventory_summary(
+            all_predictions, annotated_images, class_labels
+        )
+        (output_dir / "inventario_por_foto.json").write_text(
+            json.dumps(inventory_summary, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
 
         print("\nFASE 2: evaluación contra las etiquetas reales.")
         compared_rows = compare_with_references(
