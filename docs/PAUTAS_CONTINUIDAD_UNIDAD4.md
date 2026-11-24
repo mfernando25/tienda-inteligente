@@ -130,6 +130,27 @@ La solución común del examen reutiliza los componentes trabajados en las dos s
 
 Cada equipo recibe un escenario y adapta los datos y las reglas del negocio, sin cambiar toda la arquitectura.
 
+### Extensión propuesta para el examen: mejora del chatbot mediante retroalimentación
+
+Incorporar una funcionalidad de aprendizaje supervisado con intervención del usuario (*human-in-the-loop*). No forma parte de la práctica de Sesión 2; se plantea como una mejora que los equipos podrían implementar y demostrar en el examen.
+
+Comportamiento esperado:
+1. Cuando el chatbot no reconoce una pregunta con suficiente seguridad, debe solicitar al usuario que indique qué intención quería expresar.
+2. También debe permitir que el usuario corrija una clasificación incorrecta, incluso cuando el chatbot haya respondido con una intención equivocada.
+3. La pregunta original y la intención confirmada se guardan como un nuevo ejemplo etiquetado en un archivo separado, por ejemplo `feedback_intenciones.csv`. No se modifica el dataset base.
+4. El clasificador incorpora los ejemplos confirmados al conjunto de entrenamiento y vuelve a entrenarse.
+5. Al repetir la misma pregunta, el chatbot debe demostrar si ahora reconoce la intención esperada.
+
+La intención no debe asignarse automáticamente a una pregunta dudosa sin confirmación del usuario. La mejora evalúa el manejo de incertidumbre, la captura de etiquetas, la persistencia de retroalimentación y el reentrenamiento del modelo.
+
+Evidencias sugeridas para el examen:
+- Pregunta inicial que el chatbot clasifica incorrectamente o no logra reconocer.
+- Corrección explícita del usuario y registro de la pregunta con su intención confirmada.
+- Evidencia del reentrenamiento.
+- Nueva ejecución de la pregunta y comparación del resultado antes y después.
+
+Para mantener la comparabilidad entre equipos, todos deben demostrar el mismo flujo de corrección y reentrenamiento, aunque sus escenarios de negocio sean distintos.
+
 Condiciones para que los escenarios sean evaluables:
 - Faltantes y exceso requieren umbrales mínimos o máximos definidos.
 - Productos mal ubicados requiere un planograma o distribución esperada.
