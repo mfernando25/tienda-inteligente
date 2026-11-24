@@ -145,6 +145,8 @@ def process_image(image_path: Path, svm, hog, window, index_to_label,
     rows = []
     counts: Counter = Counter()
     crops_root = output_dir / "recortes_predichos"
+    for class_id in sorted(index_to_label.values()):
+        (crops_root / class_id).mkdir(parents=True, exist_ok=True)
 
     for slot_number in range(1, ROWS * COLUMNS + 1):
         crop = crop_slot(rectified, slot_number)
