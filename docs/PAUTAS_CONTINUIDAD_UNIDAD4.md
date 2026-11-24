@@ -17,18 +17,17 @@ No crear ejercicios aislados ni herramientas que no se reutilicen en el proyecto
 ### Sesión 1 – La tienda ve y aprende
 **Ejes 1 y 2: Machine Learning y Visión por computadora.**
 
-Estado: los grupos completaron la preparación del dataset y el entrenamiento HOG + SVM. Falta cerrar la integración de inferencia sobre anaqueles completos.
+Estado: los grupos completaron la preparación del dataset y el entrenamiento HOG + SVM. El cierre consiste en evaluar el modelo con cinco fotografías nuevas.
 
 Cierre acordado:
-- Recibir 15 fotografías JPG nuevas de anaqueles completos, capturadas con Android, en `dataset/iteraciones/iteracion_01/entrada/`.
-- Mantener las ocho categorías e ilustraciones del generador actual, variando las distribuciones y condiciones de captura.
+- Crear cinco distribuciones nuevas, capturarlas con Android y exportar el JPG y su JSON de referencia.
+- Guardar los JPG y JSON en carpetas separadas, con el mismo nombre base, dentro de `dataset/iteraciones/evaluacion_01/`.
 - Aplicar el modelo existente con `predecir_anaqueles.py`, sin reentrenarlo.
-- No usar JSON del generador como entrada de predicción.
-- Clasificar las 32 posiciones de cada fotografía.
-- Guardar cada recorte en una carpeta según la clase predicha.
-- Generar la imagen anotada y el inventario estimado por fotografía.
+- Clasificar primero las 32 posiciones de cada JPG, sin consultar el JSON.
+- Cuando terminen todas las predicciones, comparar las clases predichas con las etiquetas reales del JSON.
+- Generar un informe HTML con métricas, matriz de confusión, errores y anaqueles anotados.
 
-La guía de Sesión 1 termina cuando se procesa el lote, se revisan las predicciones y se interpreta el inventario visual.
+La guía de Sesión 1 termina con la interpretación del informe de evaluación.
 
 ### Sesión 2 – La tienda entiende y conversa
 **Ejes 3 y 4: Procesamiento de lenguaje natural y Sistemas conversacionales.**
@@ -43,67 +42,63 @@ No incorporar esta práctica dentro de la guía de Sesión 1.
 
 ## 3. Iteraciones de evaluación visual
 
-### Iteración 01 – Mismos diseños, nuevos anaqueles
+### Evaluación 01 – Cinco anaqueles nuevos
 
-- Entrada: 15 fotografías JPG de anaqueles completos, no fotos individuales de productos.
+- Entrada: cinco fotografías JPG de anaqueles completos y cinco JSON de referencia con el mismo nombre base.
 - Mantener las ocho ilustraciones originales y la clase `empty`.
-- Variar la distribución de productos y las condiciones moderadas de captura.
+- Variar las distribuciones para que las nueve clases estén representadas en el conjunto.
 - Usar el mismo modelo HOG + SVM ya entrenado.
-- No ejecutar `preparar_dataset.py` ni `entrenar_modelo.py`.
-- No usar JSON como entrada ni ayuda para la predicción.
+- No ejecutar `preparar_dataset.py` ni `entrenar_modelo.py` para estas cinco fotografías.
+- La clasificación utiliza únicamente el JPG. Los JSON se abren después de completar todas las predicciones y se usan solo para calcular métricas.
 
-El JSON no es necesario para clasificar. Si se conserva una copia como referencia para una comparación posterior, debe permanecer separada del flujo de inferencia y no será requisito para generar los resultados.
+El objetivo es evaluar el reconocimiento en nuevas distribuciones y capturas, no inferir el inventario de negocio.
 
-### Iteración 02 – Nuevos diseños visuales
+### Evaluación posterior – Nuevos diseños visuales
 
 - Mantener las mismas categorías semánticas e identificadores.
 - Cambiar la representación visual de los productos: formas, contornos y detalles, no solamente colores.
 - Aplicar inicialmente el mismo modelo, sin reentrenarlo, para observar la pérdida de generalización.
 - Conservar los resultados en una carpeta independiente.
 
-Esta iteración es una prueba de limitaciones, no una promesa de que el modelo reconocerá empaques o diseños desconocidos. Una mejora o reentrenamiento posterior debe definirse como una actividad distinta.
+Esta prueba estudia las limitaciones del modelo con diseños distintos; no garantiza que reconozca empaques comerciales reales.
 
-## 4. Organización de resultados por iteración
+## 4. Organización de archivos de evaluación
 
-Cada iteración mantiene sus propios archivos. No sobrescribir ni mezclar resultados.
-
-Estructura acordada:
+Las entradas y referencias se guardan separadas de los resultados:
 
 ~~~text
 cv-lab/
+├── dataset/
+│   └── iteraciones/
+│       └── evaluacion_01/
+│           ├── entrada/
+│           │   └── captura_031.jpg ... captura_035.jpg
+│           └── referencias/
+│               └── captura_031.json ... captura_035.json
 └── salida_ml/
     └── iteraciones/
-        ├── iteracion_01/
-        │   ├── entrada/
-        │   ├── anaqueles_anotados/
-        │   ├── recortes_predichos/
-        │   │   ├── canned/
-        │   │   ├── cereal/
-        │   │   ├── cookies/
-        │   │   ├── detergent/
-        │   │   ├── empty/
-        │   │   ├── juice/
-        │   │   ├── milk/
-        │   │   ├── soda/
-        │   │   └── water/
-        │   ├── predicciones.csv
-        │   └── inventario_por_foto.csv
-        └── iteracion_02/
-            └── misma estructura
+        └── evaluacion_01/
+            ├── anaqueles_anotados/
+            ├── recortes_predichos/
+            ├── predicciones.csv
+            ├── metricas_por_clase.csv
+            ├── matriz_confusion.csv
+            ├── errores.csv
+            ├── evaluacion.json
+            └── informe_evaluacion.html
 ~~~
 
-Cada recorte conserva el identificador de captura y la posición, por ejemplo `captura_016_slot_05.png`.
-
-Cada anaquel es un escenario independiente. El inventario debe presentarse por fotografía; no sumar las 15 fotografías como si fueran un único inventario físico. El CSV de predicciones conserva una fila por posición y permite rastrear cada clasificación.
+Para una evaluación posterior, utilizar una carpeta nueva (por ejemplo, `evaluacion_02`) y mantener separados sus JPG, JSON y resultados.
 
 ## 5. Reglas sobre datos y evaluación
 
-- La inferencia recibe fotografías JPG y el modelo entrenado; no recibe JSON.
-- La carpeta de destino de cada recorte se determina exclusivamente por la predicción del modelo.
-- No cambiar, corregir ni renombrar manualmente las clases predichas para hacer parecer mejor el resultado.
-- Los nombres de archivo deben conservar captura y posición.
-- El JSON solo puede utilizarse como referencia externa posterior, si se decide calcular métricas contra la distribución real.
-- Distinguir inventario visual de posiciones (*facings*) de stock físico o unidades en almacén. El generador actual muestra un producto por posición y no permite inferir unidades detrás del frente.
+- La fase de inferencia recibe fotografías JPG y el modelo entrenado; no consulta JSON.
+- La comparación con las etiquetas reales se ejecuta solamente después de terminar todas las predicciones.
+- La carpeta de cada recorte se determina por la clase predicha, no por la etiqueta real.
+- No corregir ni renombrar manualmente las predicciones.
+- Los nombres de archivos conservan el identificador de captura y la posición.
+- Las métricas se interpretan como evaluación por posición dentro de cinco anaqueles, no como 160 fotografías independientes.
+- El generador representa posiciones (*facings*), no stock físico de almacén.
 
 ## 6. Continuidad con el examen final
 
@@ -132,7 +127,7 @@ No asumir que una fotografía proporciona datos de ventas, stock de almacén o s
 
 - Preferir herramientas locales, gratuitas y reproducibles en Windows.
 - No añadir APIs pagadas, backend o dependencias que no sean necesarias.
-- Mantener el generador actual para la Iteración 01. Los nuevos diseños se incorporan solamente en la Iteración 02.
+- Mantener el generador actual y sus ocho ilustraciones para la Evaluación 01. Los nuevos diseños visuales se reservan para una prueba posterior de generalización.
 - Preparar y probar los scripts antes de llevarlos al aula.
 - Las guías deben partir del estado real del repositorio y mostrar comandos, rutas, código y comprobaciones concretas.
 - No repetir pasos que los grupos ya completaron.
