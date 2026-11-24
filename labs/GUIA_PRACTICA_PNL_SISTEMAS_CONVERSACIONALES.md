@@ -11,7 +11,7 @@ Construir una solución integrada que procese comentarios en español, clasifiqu
 
 ## Preparación previa: entorno y modelo
 
-**Esta preparación debe realizarse antes de iniciar los 60 minutos de práctica.** La instalación de PyTorch y la descarga inicial del modelo pueden tomar varios minutos, según la conexión y el equipo.
+**Realiza esta preparación antes de la sesión.** La instalación de PyTorch y la descarga inicial del modelo pueden tomar varios minutos, según la conexión y el equipo.
 
 La Sesión 1 deja la terminal dentro de `cv-lab/`. Desde Git Bash, vuelve a la raíz del repositorio:
 
@@ -80,9 +80,9 @@ Trabaja con el archivo **`nlp-lab → salida → comentarios_analizados.csv`**, 
 1. Abre `comentarios_analizados.csv` desde el Explorador de VS Code.
 2. Busca el valor `False` (puedes usar Ctrl + F). Cada fila encontrada representa un comentario donde la predicción no coincide con la referencia.
 3. En esa misma fila, lee las columnas `comentario`, `sentimiento_referencia` y `sentimiento_predicho`.
-4. Selecciona dos casos y explica por qué crees que el modelo pudo clasificarlos de otra manera. Considera el contexto, expresiones propias de opiniones comerciales y las diferencias entre el lenguaje de redes sociales y las opiniones sobre productos.
+4. Selecciona un caso y explica por qué crees que el modelo pudo clasificarlo de otra manera. Considera el contexto, expresiones propias de opiniones comerciales y las diferencias entre el lenguaje de redes sociales y las opiniones sobre productos.
 
-Si no encuentras ninguna fila con `False`, significa que el modelo no tuvo desacuerdos con este conjunto de comentarios. En ese caso, revisa dos comentarios y explica qué elementos del texto pudieron influir en la predicción.
+Si no encuentras ninguna fila con `False`, significa que el modelo no tuvo desacuerdos con este conjunto de comentarios. En ese caso, revisa un comentario y explica qué elementos del texto pudieron influir en la predicción.
 
 PySentimiento utiliza un modelo preentrenado para español, entrenado principalmente con publicaciones de redes sociales. Su resultado en comentarios comerciales puede variar. Además, las opiniones de esta práctica son simuladas; las métricas no representan el rendimiento en clientes reales.
 
@@ -102,6 +102,14 @@ python conversational-lab/src/asistente_tienda.py
 Al iniciar, el chatbot separa el 25% de las preguntas etiquetadas para una validación inicial, muestra accuracy y F1 macro, y luego entrena el clasificador final con todos los ejemplos de **conversational-lab → dataset → intenciones.csv**. Como el conjunto es pequeño, interpreta las métricas como una estimación inicial, no como garantía de que reconocerá cualquier pregunta.
 
 ### ¿Cómo reconoce las preguntas?
+
+Una **intención** es el propósito de una pregunta: qué información busca el usuario o qué acción espera del chatbot. No es el nombre del producto ni una palabra aislada. Por eso, dos preguntas sobre la leche pueden tener intenciones distintas:
+
+| Pregunta | Intención |
+|---|---|
+| ¿Cuántas posiciones visibles tiene la leche? | `INVENTARIO_PRODUCTO` |
+| ¿Qué opinan los clientes sobre la leche? | `OPINIONES_PRODUCTO` |
+| ¿Qué quejas hay sobre la leche? | `QUEJAS_PRODUCTO` |
 
 El sistema aplica aprendizaje automático supervisado:
 
@@ -143,41 +151,46 @@ No necesitas recordar códigos de fotografías ni mencionar un anaquel concreto 
 
 El asistente debe indicar que no dispone de datos históricos. Las cinco fotografías corresponden a anaqueles distintos y no permiten calcular cuánto tiempo lleva faltando un producto.
 
+### Actividad: realizar siete consultas
+
+Realiza **siete consultas diferentes**, cada una correspondiente a una intención distinta. Incluye obligatoriamente:
+- Una consulta sobre inventario de un producto (`INVENTARIO_PRODUCTO`).
+- Una consulta sobre opiniones de un producto (`OPINIONES_PRODUCTO`).
+- Una consulta sobre comentarios negativos de un producto (`QUEJAS_PRODUCTO`).
+
+Selecciona otras cuatro intenciones entre las disponibles. Para cada consulta, registra la pregunta realizada, la intención detectada y un resumen de la respuesta del chatbot.
+
 ### Actividad: ampliar el aprendizaje del chatbot
 
 Abre **conversational-lab → dataset → intenciones.csv** en VS Code.
 
-1. Revisa cómo cada pregunta está asociada a una etiqueta de intención.
-2. Añade dos formas distintas de expresar una de las consultas, conservando la intención correcta.
-3. Guarda el archivo y reinicia el chatbot para que vuelva a entrenarse con los nuevos ejemplos.
-4. Prueba una pregunta nueva y observa qué intención detecta y qué puntaje devuelve.
+El archivo contiene inicialmente **72 preguntas etiquetadas: ocho por cada una de las nueve intenciones**.
+
+**¿Qué debes agregar?**
+
+1. Añade **15 preguntas nuevas en total**. Incluye al menos una pregunta para cada una de las nueve intenciones y distribuye las seis restantes entre las intenciones que consideres que necesitan más variedad.
+2. Cada fila debe tener dos datos: la etiqueta de intención existente y una pregunta nueva. Utiliza exactamente los nombres de las intenciones que ya aparecen en el CSV; no inventes etiquetas.
+3. Escribe las preguntas con tus propias palabras. No basta con copiar o cambiar una sola palabra de los ejemplos existentes. Evita repetir preguntas.
+4. Guarda el archivo y reinicia el chatbot para que vuelva a entrenarse con los nuevos ejemplos.
+5. Comprueba algunas de tus preguntas nuevas y observa qué intención detecta y qué puntaje devuelve.
+
+Recuerda: la intención representa lo que el usuario quiere saber o hacer. Por ejemplo, preguntar por la cantidad visible de leche es distinto de preguntar qué opinan los clientes sobre ella. Aunque el producto sea el mismo, la intención cambia.
 
 Esta actividad permite comprobar que el clasificador aprende de los ejemplos etiquetados. Tras añadir preguntas, las métricas de validación pueden variar. Si una pregunta está muy alejada de las expresiones de entrenamiento, puede clasificarla incorrectamente; por eso se deben ampliar y evaluar sus ejemplos.
 
-## 4. Distribución de la práctica (60 minutos)
-
-| Tiempo | Actividad |
-|---|---|
-| 0–5 min | Conectar los resultados de visión artificial con la nueva funcionalidad de la tienda. |
-| 5–15 min | Explorar normalización y tokenización de comentarios. |
-| 15–27 min | Ejecutar el análisis de sentimientos y revisar desacuerdos. |
-| 27–45 min | Evaluar, ampliar y volver a entrenar el clasificador de intenciones. |
-| 45–55 min | Consultar inventario y opiniones desde el chatbot. |
-| 55–60 min | Interpretar resultados y discutir limitaciones. |
-
-La instalación de dependencias y la primera descarga del modelo se realizan antes de estos 60 minutos.
-
-## 5. Entregables
+## 4. Entregables
 
 1. Los tres archivos generados en **nlp-lab → salida**:
    - `comentarios_analizados.csv`
    - `evaluacion_sentimientos.json`
    - `resumen_sentimientos.json`
-2. Dos nuevas preguntas etiquetadas agregadas al dataset de intenciones.
-3. Registro de al menos tres consultas al chatbot: una sobre inventario, una sobre opiniones y otra sobre comentarios negativos.
+2. El archivo `intenciones.csv` actualizado con **15 preguntas nuevas y etiquetadas**.
+3. Registro de **siete consultas diferentes** al chatbot. Cada una debe corresponder a una intención distinta e incluir la pregunta, la intención detectada y un resumen de la respuesta.
 4. Una explicación breve de un desacuerdo del análisis de sentimientos y una limitación del clasificador de intenciones.
 
-## 6. Consideraciones
+**Ejemplo de desacuerdo de sentimientos:** el comentario «La fecha de vencimiento aparece impresa en la parte superior» tiene como referencia `neutral`. Si el modelo lo clasificara como `negativo`, una posible explicación sería que asoció la palabra «vencimiento» con una señal negativa, aunque el comentario solo comunica un dato del envase. Es un ejemplo orientativo: en tu entrega debes revisar los valores reales de tu CSV y explicar un desacuerdo que aparezca en tus resultados.
+
+## 5. Consideraciones
 
 - El inventario representa posiciones visibles (*facings*) en cinco fotografías, no unidades disponibles en almacén.
 - La ausencia de un producto en una fotografía no demuestra que esté agotado en el almacén.
