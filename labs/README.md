@@ -2,11 +2,11 @@
 
 ## Guías disponibles
 
-- [Cierre de la sesión 1: inferencia del anaquel completo](GUIA_PRACTICA_INTEGRACION_ML_VISION_ANAQUEL.md)
+1. [Sesión 1: Machine Learning y Visión por computadora](GUIA_PRACTICA_INTEGRACION_ML_VISION_ANAQUEL.md)  
+   Preparación del dataset, entrenamiento HOG + SVM y evaluación con cinco fotografías nuevas y sus JSON de referencia.
 
-La guía prepara el modelo HOG + SVM y lo evalúa con cinco fotografías nuevas junto con sus JSON de referencia. El programa genera un informe HTML con métricas, matriz de confusión y errores.
-
-La sesión 2 tendrá una guía independiente para PLN y Sistemas conversacionales.
+2. [Sesión 2: Procesamiento de lenguaje natural y Sistemas conversacionales](GUIA_PRACTICA_PNL_SISTEMAS_CONVERSACIONALES.md)  
+   Análisis léxico de 72 comentarios de clientes y desarrollo de un asistente local que consulta resultados de PLN y visión por computadora.
 
 ## Pautas del proyecto
 
