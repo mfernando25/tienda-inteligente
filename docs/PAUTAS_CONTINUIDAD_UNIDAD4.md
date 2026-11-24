@@ -36,13 +36,24 @@ Tendrá una segunda guía independiente: `labs/GUIA_PRACTICA_PNL_SISTEMAS_CONVER
 - El inventario visual producido en la Sesión 1: `cv-lab/salida_ml/iteraciones/evaluacion_01/inventario_por_foto.json`.
 - El dataset `nlp-lab/dataset/comentarios_clientes.csv`, con 72 comentarios simulados en español, ocho categorías y distribución equilibrada: 24 positivos, 24 negativos y 24 neutrales.
 
-El Eje 3 incluye normalización, tokenización, análisis léxico de sentimientos, manejo básico de negaciones, evaluación contra etiquetas de referencia y generación de `nlp-lab/salida/resumen_sentimientos.json`.
+**Eje 3 – PLN y análisis de opiniones**
+- Normalización y tokenización exploratoria mediante NLTK.
+- Clasificación de sentimientos con un modelo Transformer preentrenado para español, a través de PySentimiento.
+- Comparación de las predicciones con `sentimiento_referencia`, con accuracy, F1 macro y matriz de confusión.
+- Generación de `nlp-lab/salida/resumen_sentimientos.json` para su uso por el chatbot.
+- Interpretación de desacuerdos y limitaciones del dominio del modelo: el modelo de referencia se entrenó principalmente con publicaciones de redes sociales, mientras que la práctica utiliza comentarios comerciales sintéticos.
 
-El Eje 4 incluye un chatbot local basado en reglas que identifica intenciones mediante palabras clave y expresiones regulares, y consulta `inventario_por_foto.json` y `resumen_sentimientos.json`. Las consultas de inventario se orientan a necesidades de negocio: menor presencia de productos, categorías predominantes, productos no detectados en las fotografías y ocupación de anaqueles. No se exige al usuario recordar el código de una captura para realizar consultas agregadas.
+**Eje 4 – Sistemas conversacionales**
+- Clasificación supervisada de intenciones mediante `TfidfVectorizer` + `LogisticRegression` de scikit-learn.
+- Dataset de preguntas etiquetadas: `conversational-lab/dataset/intenciones.csv`. Los estudiantes podrán añadir variantes de preguntas y volver a entrenar el clasificador.
+- Extracción de entidades de producto mediante alias y consulta de `inventario_por_foto.json` y `resumen_sentimientos.json`.
+- Respuestas construidas con plantillas a partir de los datos del proyecto.
 
-Los cinco JPG representan cinco anaqueles distintos, no un registro temporal del mismo anaquel. Por ello, pueden compararse posiciones visibles acumuladas y presencia/ausencia por fotografía, pero no inferir cuánto tiempo lleva faltando un producto ni el stock del almacén. El chatbot acepta lenguaje natural acotado al dominio, pero no es un modelo generativo ni comprende consultas arbitrarias.
+El chatbot utiliza aprendizaje automático para identificar intenciones, pero no es generativo ni un LLM. La extracción de entidades y la construcción de respuestas se mantienen determinísticas y limitadas al dominio de la tienda.
 
-El desarrollo utiliza la biblioteca estándar de Python, sin APIs pagadas ni backend. Mantener esta práctica en su segunda guía; no incorporarla en la guía de Sesión 1.
+Las consultas se plantean como necesidades de negocio: menor y mayor presencia de productos, ausencias en las fotografías, ocupación de anaqueles, inventario visible por categoría y análisis de opiniones/quejas. No se exige recordar códigos de captura. Los cinco JPG representan cinco anaqueles distintos, no un registro temporal del mismo anaquel; por tanto, no permiten inferir cuánto tiempo lleva faltando un producto ni el stock del almacén.
+
+La práctica completa debe ejecutarse en aproximadamente 60 minutos de clase. La instalación de dependencias y la primera descarga del modelo Transformer son preparación previa y no forman parte de esos 60 minutos. Se usa un entorno independiente `.venv-sesion2`, sin modificar el entorno de visión de la Sesión 1. Mantener esta práctica en su segunda guía; no incorporarla en la guía de Sesión 1.
 
 ## 3. Iteraciones de evaluación visual
 
@@ -130,13 +141,14 @@ No asumir que una fotografía proporciona datos de ventas, stock de almacén o s
 
 ## 7. Criterios de desarrollo
 
-- Preferir herramientas locales, gratuitas y reproducibles en Windows.
-- No añadir APIs pagadas, backend o dependencias que no sean necesarias.
+- Preferir herramientas gratuitas y reproducibles en Windows, sin APIs pagadas ni backend.
+- Mantener el entorno de visión de la Sesión 1 separado del entorno `.venv-sesion2`.
+- Descargar e inicializar el modelo Transformer antes de la clase para que el tiempo de preparación no consuma los 60 minutos de práctica.
 - Mantener el generador actual y sus ocho ilustraciones para la Evaluación 01. Los nuevos diseños visuales se reservan para una prueba posterior de generalización.
-- Preparar y probar los scripts antes de llevarlos al aula.
+- Preparar y probar los scripts con los JSON reales generados por la Sesión 1 antes de llevarlos al aula.
 - Las guías deben partir del estado real del repositorio y mostrar comandos, rutas, código y comprobaciones concretas.
 - No repetir pasos que los grupos ya completaron.
-- Una guía por sesión: la guía de Sesión 1 cierra visión y ML; la guía de Sesión 2 desarrolla PLN y conversación.
+- Una guía por sesión: la guía de Sesión 1 cierra visión y ML; la guía de Sesión 2 desarrolla PLN y sistemas conversacionales.
 
 ## 8. Fuera de alcance por ahora
 
