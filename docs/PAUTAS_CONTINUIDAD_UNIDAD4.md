@@ -45,7 +45,8 @@ Tendrá una segunda guía independiente: `labs/GUIA_PRACTICA_PNL_SISTEMAS_CONVER
 
 **Eje 4 – Sistemas conversacionales**
 - Clasificación supervisada de intenciones mediante `TfidfVectorizer` + `LogisticRegression` de scikit-learn.
-- Dataset de preguntas etiquetadas: `conversational-lab/dataset/intenciones.csv`. Los estudiantes podrán añadir variantes de preguntas y volver a entrenar el clasificador.
+- Dataset de preguntas etiquetadas: `conversational-lab/dataset/intenciones.csv`, con 108 ejemplos iniciales distribuidos en nueve intenciones (12 por intención). Los estudiantes podrán añadir variantes de preguntas y volver a entrenar el clasificador.
+- Validación del clasificador con una partición estratificada del 25% para calcular accuracy y F1 macro; después el asistente se entrena con todos los ejemplos. Las métricas son orientativas por el tamaño reducido del dataset.
 - Extracción de entidades de producto mediante alias y consulta de `inventario_por_foto.json` y `resumen_sentimientos.json`.
 - Respuestas construidas con plantillas a partir de los datos del proyecto.
 
