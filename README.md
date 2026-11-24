@@ -12,23 +12,38 @@ Aplicación web local 2D con un anaquel de 4 filas × 8 columnas, ocho productos
 Instrucciones: [shelf-generator/README.md](shelf-generator/README.md).
 
 ### Visión por computadora y Machine Learning
-Incluye rectificación de perspectiva, preparación del dataset, entrenamiento HOG + SVM e inferencia por lotes sobre fotografías completas.
+Incluye rectificación de perspectiva, preparación del dataset, entrenamiento HOG + SVM e inferencia y evaluación sobre cinco fotografías nuevas con etiquetas de referencia.
 
 Instrucciones técnicas: [cv-lab/README.md](cv-lab/README.md).
 
-### Guía de laboratorio – Sesión 1
-[Cierre de sesión 1: inferencia del anaquel completo](labs/GUIA_PRACTICA_INTEGRACION_ML_VISION_ANAQUEL.md).
+### Procesamiento de lenguaje natural
+Contiene un dataset de 72 comentarios simulados en español y un analizador léxico local con tokenización, manejo básico de negaciones y evaluación contra etiquetas de referencia.
 
-### Pautas de continuidad de la Unidad 4
+Instrucciones: [nlp-lab/README.md](nlp-lab/README.md).
+
+### Sistemas conversacionales
+Asistente local basado en reglas que consulta el inventario estimado por visión y el resumen de sentimientos producido por PLN.
+
+Instrucciones: [conversational-lab/README.md](conversational-lab/README.md).
+
+## Guías de laboratorio
+
+- [Sesión 1: Machine Learning y Visión por computadora](labs/GUIA_PRACTICA_INTEGRACION_ML_VISION_ANAQUEL.md).
+- [Sesión 2: Procesamiento de lenguaje natural y Sistemas conversacionales](labs/GUIA_PRACTICA_PNL_SISTEMAS_CONVERSACIONALES.md).
+
+## Pautas de continuidad de la Unidad 4
+
 [Decisiones del proyecto, iteraciones y escenarios del examen](docs/PAUTAS_CONTINUIDAD_UNIDAD4.md).
 
 ## Estructura
 
-- shelf-generator/: generador de anaqueles.
-- cv-lab/: scripts OpenCV, preparación del dataset, entrenamiento e inferencia.
-- docs/: arquitectura y decisiones del proyecto.
-- labs/: guías de prácticas.
-- exam/: recursos de evaluación.
+- `shelf-generator/`: generador de anaqueles.
+- `cv-lab/`: scripts OpenCV, preparación del dataset, entrenamiento e inferencia/evaluación.
+- `nlp-lab/`: dataset de comentarios y análisis de sentimientos.
+- `conversational-lab/`: asistente conversacional local.
+- `docs/`: arquitectura y decisiones del proyecto.
+- `labs/`: guías prácticas independientes por sesión.
+- `exam/`: recursos de evaluación.
 
 ## Requisitos y restricciones
 
@@ -36,12 +51,11 @@ Instrucciones técnicas: [cv-lab/README.md](cv-lab/README.md).
 - Ejecución local siempre que sea posible.
 - Sin dependencia de servicios externos de pago.
 - Instrucciones reproducibles para Windows.
+- El analizador de opiniones y el asistente utilizan la biblioteca estándar de Python.
 
 ## Estado
 
 - **Generador:** prototipo funcional.
-- **Dataset de entrenamiento:** 15 fotografías y hasta 480 recortes por grupo; datos locales.
-- **Modelo inicial:** HOG + SVM entrenado con ocho ilustraciones de productos y la clase `empty`.
-- **Cierre de sesión 1:** inferencia por lotes sobre 15 anaqueles nuevos, pendiente de ejecución por los grupos.
-- **Iteración 02:** nuevos diseños visuales para observar la generalización; posterior a la Iteración 01.
-- **Sesión 2:** PLN y Sistemas conversacionales; tendrá una guía independiente.
+- **Sesión 1:** entrenamiento HOG + SVM y evaluación con cinco fotografías nuevas; informe HTML generado por los grupos.
+- **Sesión 2:** estructura, dataset, analizador de sentimientos, asistente conversacional y guía independiente incorporados al repositorio.
+- **Evaluación posterior:** nuevos diseños visuales para estudiar la generalización del modelo, fuera del flujo principal de la sesión 2.
