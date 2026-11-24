@@ -3,6 +3,59 @@
 **Unidad 4 – Inteligencia de Negocios**  
 **Ejes 1 y 2:** Machine Learning y Visión por computadora.
 
+## Preparar el entorno y recuperar el trabajo
+
+### Primera vez en una computadora
+
+Desde Git Bash, ubicarse en la carpeta donde se guardarán los proyectos:
+
+~~~bash
+git clone https://github.com/mfernando25/tienda-inteligente.git
+cd tienda-inteligente/cv-lab
+py -m venv .venv
+source .venv/Scripts/activate
+python -m pip install -r requirements.txt
+~~~
+
+### Si el repositorio ya está clonado
+
+Desde la carpeta raíz del repositorio:
+
+~~~bash
+git pull
+cd cv-lab
+source .venv/Scripts/activate
+~~~
+
+Si la carpeta `.venv` ya no existe (por ejemplo, después de DeepFreeze), recrearla e instalar las dependencias:
+
+~~~bash
+py -m venv .venv
+source .venv/Scripts/activate
+python -m pip install -r requirements.txt
+~~~
+
+### Respaldo para continuar después de DeepFreeze
+
+Las carpetas `cv-lab/dataset/` y `cv-lab/salida_ml/` contienen datos y resultados locales: están excluidas de GitHub y no se recuperan con `git clone` ni con `git pull`. Guardar una copia fuera de la zona que DeepFreeze restaura.
+
+Después de clonar o actualizar el repositorio, copiar las carpetas respaldadas a `cv-lab/`, conservando sus nombres y estructura. Según lo que se haya guardado:
+
+- **Se respaldaron `dataset/` y `salida_ml/`:** restaurar ambas carpetas. No es necesario preparar el dataset ni volver a entrenar; se puede continuar con la inferencia.
+- **Se respaldó todo `dataset/`, pero no `salida_ml/`:** si están presentes `images/crops/` y `manifests/recortes.csv`, ejecutar `python entrenar_modelo.py` para reconstruir el modelo.
+- **Solo se respaldaron las fotografías originales y sus JSON:** ubicarlos en `dataset/images/raw/` y `dataset/labels/`, respectivamente, con el mismo nombre base; ejecutar primero `python preparar_dataset.py` y después `python entrenar_modelo.py`.
+
+Para la inferencia de esta guía deben existir estos dos archivos del modelo:
+
+~~~text
+cv-lab/salida_ml/modelo_hog_svm.yml
+cv-lab/salida_ml/modelo_hog_svm.json
+~~~
+
+No basta con guardar únicamente el código del repositorio: las fotografías, etiquetas, recortes, manifiesto y modelo entrenado son archivos locales.
+
+---
+
 ## Punto de partida
 
 En la práctica anterior cada grupo ya:
