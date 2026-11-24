@@ -85,6 +85,7 @@ cv-lab/
             ├── matriz_confusion.csv
             ├── errores.csv
             ├── evaluacion.json
+            ├── inventario_por_foto.json
             └── informe_evaluacion.html
 ~~~
 
