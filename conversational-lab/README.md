@@ -19,7 +19,7 @@ Este laboratorio conecta los resultados de visión artificial y PLN mediante un 
 5. Identifica el producto mencionado mediante un diccionario de entidades y alias.
 6. Consulta los JSON del proyecto y construye la respuesta con los datos disponibles.
 
-El dataset inicial contiene 144 preguntas: 16 por cada una de las nueve intenciones. El clasificador usa stemming para español y solicita reformular cuando la predicción es ambigua. La validación usa un conjunto pequeño de ejemplos, por lo que sus métricas son orientativas. El clasificador se entrena cada vez que se inicia el asistente. Para ampliar las formas de preguntar, se agregan nuevas frases etiquetadas en `dataset/intenciones.csv` y se reinicia el programa.
+El dataset inicial contiene 72 preguntas: ocho por cada una de las nueve intenciones. En la práctica se agregan 15 preguntas nuevas, etiquetadas y distribuidas entre las intenciones. El clasificador usa stemming para español y solicita reformular cuando la predicción es ambigua. La validación usa un conjunto pequeño de ejemplos, por lo que sus métricas son orientativas. El clasificador se entrena cada vez que se inicia el asistente. Para ampliar las formas de preguntar, se agregan nuevas frases etiquetadas en `dataset/intenciones.csv` y se reinicia el programa.
 
 ## Ejecutar
 
