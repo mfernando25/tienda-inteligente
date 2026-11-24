@@ -88,7 +88,7 @@ Abre **comentarios_analizados.csv** desde el Explorador de VS Code para observar
 
 **Importante:** el método es léxico y basado en reglas. No comprende completamente el contexto, la ironía ni todas las expresiones. Un resultado alto sobre este dataset simulado no equivale a un sistema de análisis de opiniones listo para producción.
 
-## 4. Ejecutar el sistema conversacional
+## 4. Ejecutar e interactuar con el asistente conversacional
 
 El asistente consulta automáticamente dos resultados generados en las sesiones anteriores:
 
@@ -103,39 +103,56 @@ Ejecutar desde la raíz del repositorio:
 python conversational-lab/src/asistente_tienda.py
 ~~~
 
-El programa funciona en la terminal. Identifica intenciones y categorías mediante reglas sencillas; no utiliza un LLM ni una API externa.
+El programa funciona en la terminal. Escribe tus consultas después del indicador `Tú:`.
 
-### Consultas para probar
+### ¿Es una IA o un chatbot?
+
+Es un **chatbot local basado en reglas** y constituye un sistema conversacional sencillo. Recibe preguntas escritas en lenguaje natural, identifica palabras clave y patrones para reconocer la intención y el producto, consulta los resultados de visión y PLN, y construye una respuesta.
+
+No es un modelo generativo como ChatGPT: no comprende cualquier pregunta, no mantiene una conversación abierta ni genera respuestas a partir de conocimiento general. Puede responder consultas del dominio de la tienda siempre que estén formuladas con términos que reconoce.
+
+### Cómo formular las preguntas
+
+No es necesario copiar exactamente los ejemplos, pero la consulta debe expresar una de las tareas que el asistente reconoce:
+
+- **Inventario:** pregunta por el inventario, stock, disponibilidad, posiciones o productos exhibidos. Menciona la categoría si buscas un producto concreto.
+- **Anaquel:** puedes identificarlo como `anaquel 031` o `captura_031`. Si no indicas uno, el asistente puede mostrar los resultados de todos los anaqueles.
+- **Opiniones:** pregunta qué dicen, qué opinan o qué comentarios tienen los clientes. Incluye el nombre del producto.
+- **Problemas o quejas:** menciona términos como «comentarios negativos», «quejas», «reclamos» o «problemas» para solicitar los ejemplos negativos clasificados.
+
+Formula una consulta por vez. Puedes escribirla con tus propias palabras, pero debe contener las pistas necesarias para que el asistente identifique qué dato necesitas.
+
+### Consultas de ejemplo
 
 **Inventario visual:**
 
 ~~~text
-¿Cuántas posiciones de leche hay en captura_031?
-¿Qué productos tienen menos de 3 posiciones en captura_031?
-¿Cuál es el inventario de captura_032?
+¿Cómo está el inventario del anaquel 031?
+¿Cuánto cereal se exhibe en el anaquel 031?
+¿Hay leche disponible en el anaquel 031?
 ~~~
 
 **Opiniones de clientes:**
 
 ~~~text
-¿Qué opinan los clientes sobre el cereal?
-¿Qué comentarios negativos hay sobre la gaseosa?
-¿Qué categoría tiene más opiniones negativas?
+¿Qué dicen los clientes sobre el cereal?
+¿Hay comentarios negativos sobre la gaseosa?
+¿Qué problemas reportan los clientes sobre el detergente?
 ~~~
 
 El asistente responde con los datos disponibles en los JSON. El inventario representa posiciones visibles (*facings*), no unidades almacenadas en bodega. Los sentimientos son resultados del analizador léxico, no opiniones reales verificadas.
 
-Escribir `ayuda` para ver ejemplos o `salir` para terminar.
+Escribir `ayuda` para ver ejemplos o `salir` para terminar. Si la consulta no coincide con las reglas implementadas, el asistente indicará que no pudo identificarla y mostrará ejemplos.
 
 ## 5. Interpretar y discutir
 
 Responder:
 
-1. ¿Cómo se transforma un comentario en tokens?
-2. ¿Por qué una negación puede cambiar el sentimiento de una frase?
-3. ¿Qué expresiones no logra interpretar correctamente el diccionario?
-4. ¿Qué diferencia existe entre consultar inventario visual y consultar opiniones?
-5. ¿Qué limitaciones tiene un asistente que identifica intenciones mediante reglas?
+1. ¿Qué palabras o elementos de la pregunta ayudan al asistente a identificar la intención?
+2. ¿Qué sucede si se pregunta por un producto que no está incluido en las categorías?
+3. ¿Por qué dos preguntas con el mismo propósito pueden producir resultados diferentes si una no contiene las palabras que el asistente reconoce?
+4. ¿Qué diferencia existe entre un chatbot basado en reglas y un asistente generativo como ChatGPT?
+5. ¿Qué cambios permitirían ampliar las consultas que puede reconocer el asistente?
 
 ## Entregables
 
@@ -145,6 +162,6 @@ En el Explorador de VS Code, ubica la carpeta **nlp-lab → salida**. Allí se e
 - **evaluacion_sentimientos.json**
 - **resumen_sentimientos.json**
 
-Además, realiza una prueba del asistente con consultas de inventario y opiniones, y redacta una conclusión breve sobre las limitaciones del análisis léxico y del sistema conversacional.
+Además, realiza al menos tres consultas al asistente: una sobre inventario, una sobre opiniones y una sobre comentarios negativos. Registra las preguntas realizadas y las respuestas obtenidas. Redacta una conclusión breve sobre las limitaciones del análisis léxico y del sistema conversacional.
 
 Los datos y resultados generados localmente no se suben al repositorio. El código y el dataset base de la práctica sí se versionan.
