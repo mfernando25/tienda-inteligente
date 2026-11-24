@@ -18,7 +18,7 @@ git pull
 python --version
 ~~~
 
-Esta práctica utiliza la biblioteca estándar de Python; no requiere instalar paquetes externos ni activar el entorno virtual de OpenCV.
+Se requiere Python 3.10 o superior. Esta práctica utiliza la biblioteca estándar; no requiere instalar paquetes externos ni activar el entorno virtual de OpenCV.
 
 Comprobar que existe el inventario generado en la sesión anterior:
 
