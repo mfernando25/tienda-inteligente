@@ -165,7 +165,8 @@ Se guardan en `salida_ml/iteraciones/evaluacion_01/`:
 - `metricas_por_clase.csv`: métricas por categoría.
 - `matriz_confusion.csv`: valores de la matriz.
 - `errores.csv`: posiciones mal clasificadas.
-- `evaluacion.json`: resumen estructurado.
+- `evaluacion.json`: resumen estructurado de las métricas.
+- `inventario_por_foto.json`: conteos estimados por categoría y por anaquel, derivados de las predicciones. Se reutilizará como fuente de datos en el sistema conversacional.
 - `anaqueles_anotados/` y `recortes_predichos/`: imágenes de salida.
 
 Abrir el informe desde Windows:
