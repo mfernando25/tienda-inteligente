@@ -28,21 +28,13 @@ python --version
 
 Se requiere Python 3.10 o superior. Esta práctica utiliza la biblioteca estándar; no requiere instalar paquetes externos ni activar el entorno virtual de OpenCV.
 
-Comprobar que existe el inventario generado en la sesión anterior:
+**Comprobar el archivo generado en la Sesión 1:** en el panel **Explorador** de VS Code, expande las carpetas **cv-lab → salida_ml → iteraciones → evaluacion_01** y verifica que aparezca **inventario_por_foto.json**.
 
-~~~text
-cv-lab/salida_ml/iteraciones/evaluacion_01/inventario_por_foto.json
-~~~
-
-Si el archivo no existe, primero se debe completar la evaluación de visión por computadora de la primera guía.
+No escribas ni ejecutes la ruta del archivo en la terminal. Solo ubícalo y verifica su presencia en el Explorador. Si no aparece, primero se debe completar la evaluación de visión por computadora de la primera guía.
 
 ## 2. Explorar el dataset de opiniones
 
-Abrir:
-
-~~~text
-nlp-lab/dataset/comentarios_clientes.csv
-~~~
+En el panel **Explorador** de VS Code, expande **nlp-lab → dataset** y abre el archivo **comentarios_clientes.csv**. No escribas su ruta en la terminal.
 
 El dataset contiene 72 comentarios simulados en español, distribuidos en ocho categorías:
 
@@ -86,31 +78,24 @@ El programa realiza automáticamente:
 
 ### Archivos generados
 
-Se crean automáticamente en `nlp-lab/salida/`:
+Los resultados se crean automáticamente en la carpeta **nlp-lab → salida**. Desde el Explorador de VS Code, expande esas carpetas para consultar:
 
-~~~text
-salida/
-├── comentarios_analizados.csv
-├── evaluacion_sentimientos.json
-└── resumen_sentimientos.json
-~~~
+- **comentarios_analizados.csv:** incluye el texto limpio, tokens, puntajes, sentimiento predicho y etiqueta de referencia.
+- **evaluacion_sentimientos.json:** incluye accuracy, F1 macro, matriz de confusión y métricas por sentimiento.
+- **resumen_sentimientos.json:** resume los sentimientos y conserva los comentarios agrupados por producto. Este archivo alimentará el asistente conversacional.
 
-- `comentarios_analizados.csv`: incluye el texto limpio, tokens, puntajes, sentimiento predicho y etiqueta de referencia.
-- `evaluacion_sentimientos.json`: incluye accuracy, F1 macro, matriz de confusión y métricas por sentimiento.
-- `resumen_sentimientos.json`: resume los sentimientos y conserva los comentarios agrupados por producto. Este archivo alimentará el asistente conversacional.
-
-Abrir `comentarios_analizados.csv` para observar los comentarios que el método clasificó de forma diferente a la referencia. Revisar especialmente los casos de negación y expresiones implícitas.
+Abre **comentarios_analizados.csv** desde el Explorador de VS Code para observar los comentarios que el método clasificó de forma diferente a la referencia. No copies la ruta del archivo en la terminal. Revisa especialmente los casos de negación y expresiones implícitas.
 
 **Importante:** el método es léxico y basado en reglas. No comprende completamente el contexto, la ironía ni todas las expresiones. Un resultado alto sobre este dataset simulado no equivale a un sistema de análisis de opiniones listo para producción.
 
 ## 4. Ejecutar el sistema conversacional
 
-El asistente consulta dos archivos:
+El asistente consulta automáticamente dos resultados generados en las sesiones anteriores:
 
-~~~text
-cv-lab/salida_ml/iteraciones/evaluacion_01/inventario_por_foto.json
-nlp-lab/salida/resumen_sentimientos.json
-~~~
+- El inventario visual **inventario_por_foto.json**, ubicado en **cv-lab → salida_ml → iteraciones → evaluacion_01**.
+- El resumen de opiniones **resumen_sentimientos.json**, ubicado en **nlp-lab → salida**.
+
+No necesitas abrir, copiar ni ejecutar estos archivos. El programa los lee directamente.
 
 Ejecutar desde la raíz del repositorio:
 
@@ -154,10 +139,12 @@ Responder:
 
 ## Entregables
 
-- `nlp-lab/salida/comentarios_analizados.csv`.
-- `nlp-lab/salida/evaluacion_sentimientos.json`.
-- `nlp-lab/salida/resumen_sentimientos.json`.
-- Una prueba del asistente con consultas de inventario y opiniones.
-- Una conclusión breve sobre las limitaciones del análisis léxico y del sistema conversacional.
+En el Explorador de VS Code, ubica la carpeta **nlp-lab → salida**. Allí se encuentran los tres resultados que se generan al ejecutar el analizador:
+
+- **comentarios_analizados.csv**
+- **evaluacion_sentimientos.json**
+- **resumen_sentimientos.json**
+
+Además, realiza una prueba del asistente con consultas de inventario y opiniones, y redacta una conclusión breve sobre las limitaciones del análisis léxico y del sistema conversacional.
 
 Los datos y resultados generados localmente no se suben al repositorio. El código y el dataset base de la práctica sí se versionan.
