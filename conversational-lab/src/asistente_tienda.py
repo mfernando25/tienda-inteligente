@@ -214,7 +214,7 @@ def respond(query: str, shelves: list[dict],
     threshold = find_threshold(query)
 
     opinion_terms = (
-        "opinion", "opiniones", "comentario", "comentarios",
+        "opinion", "opiniones", "opina", "opinan", "comentario", "comentarios",
         "sentimiento", "sentimientos", "cliente", "clientes",
         "resena", "resenas", "queja", "quejas",
     )
