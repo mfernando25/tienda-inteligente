@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from nltk.tokenize import wordpunct_tokenize
 from pysentimiento import create_analyzer
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
@@ -24,6 +26,11 @@ PRODUCT_NAMES = {
     "soda": "Gaseosa",
     "water": "Agua",
 }
+
+
+def normalize_text(text: str) -> str:
+    decomposed = unicodedata.normalize("NFD", text.lower())
+    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
 
 
 def load_comments(csv_path: Path) -> list[dict]:
@@ -180,11 +187,14 @@ def main() -> int:
                 for label, score in prediction.probas.items()
             }
             predicted = label_from_model(prediction)
+            tokens = wordpunct_tokenize(row["comentario"])
             analysed.append({
                 "comentario_id": row["comentario_id"],
                 "product_id": row["product_id"],
                 "producto": row["producto"],
                 "comentario": row["comentario"],
+                "texto_normalizado": normalize_text(row["comentario"]),
+                "tokens": " | ".join(tokens),
                 "sentimiento_referencia": row["sentimiento_referencia"].strip().lower(),
                 "sentimiento_predicho": predicted,
                 "acierto": predicted == row["sentimiento_referencia"].strip().lower(),
