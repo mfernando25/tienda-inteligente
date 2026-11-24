@@ -361,7 +361,7 @@ def respond(query: str, shelves: list[dict],
             "fechas históricas ni registros de reposición."
         )
 
-    if asks_fullness and asks_inventory and not product_id:
+    if asks_fullness and asks_inventory and not product_id and not asks_most and not asks_least:
         return answer_shelf_occupancy(shelves, fullest=not any(
             term in normalized for term in ("vacio", "vacios")
         ))
