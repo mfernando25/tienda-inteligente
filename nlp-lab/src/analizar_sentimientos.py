@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
-"""Analiza opiniones en español con un enfoque léxico basado en reglas.
-
-No entrena un modelo ni llama servicios externos. Compara la predicción con
-sentimiento_referencia para que los estudiantes observen aciertos y límites.
-"""
+"""Clasifica comentarios con un modelo Transformer preentrenado en español."""
 from __future__ import annotations
 
 import argparse
 import csv
 import json
-import re
-import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from pysentimiento import create_analyzer
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
 BASE = Path(__file__).resolve().parents[1]
 SENTIMENTS = ("positivo", "negativo", "neutral")
+MODEL_LABELS = {"POS": "positivo", "NEG": "negativo", "NEU": "neutral"}
 PRODUCT_NAMES = {
     "canned": "Conservas",
     "cereal": "Cereal",
@@ -26,69 +24,6 @@ PRODUCT_NAMES = {
     "soda": "Gaseosa",
     "water": "Agua",
 }
-
-# Diccionarios iniciales para esta actividad. Se pueden ampliar y discutir.
-POSITIVE_WORDS = {
-    "agradable", "agradables", "buena", "buenas", "bueno", "buenos", "buen",
-    "bien", "cremosa", "cremoso", "crocante", "crocantes", "correctamente",
-    "delicioso", "deliciosa", "facil", "fresca", "fresco", "frescas", "frescos",
-    "gusta", "gusto", "ligera", "ligero", "natural", "naturales", "refrescante",
-    "rendidor", "rendidoras", "rendidores", "rendidora", "rinde", "suave",
-    "suaves", "suficiente", "suficientes", "sellada", "sellado", "intacto",
-    "intacta", "alcanza", "quita", "elimina", "rapido", "rapida", "ligero",
-}
-
-NEGATIVE_WORDS = {
-    "agria", "agrio", "aguada", "aguado", "artificial", "artificiales",
-    "abierta", "abierto", "caliente", "danada", "danado", "desagradable",
-    "desagradables", "derramo", "empalagada", "empalagado", "empalagosa",
-    "empalagoso", "extrana", "extrano", "golpeada", "golpeado", "hinchada",
-    "hinchado", "humeda", "humedo", "mal", "mala", "malo", "olor", "perdio",
-    "pocas", "roto", "rota", "salado", "salada", "plano", "residuos",
-    "vencida", "vencido", "jarabe", "demasiado", "pésimo", "pesimo",
-}
-
-NEGATORS = {"no", "nunca", "jamas", "tampoco"}
-TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
-
-
-def normalize_text(text: str) -> str:
-    """Lowercase and remove diacritics for consistent dictionary matching."""
-    decomposed = unicodedata.normalize("NFD", text.lower())
-    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
-
-
-def tokenize(text: str) -> list[str]:
-    return TOKEN_PATTERN.findall(normalize_text(text))
-
-
-def classify_sentiment(tokens: list[str]) -> tuple[str, int, int]:
-    """Count lexicon matches, inverting a match when preceded by a negator."""
-    positive_score = 0
-    negative_score = 0
-
-    for index, token in enumerate(tokens):
-        polarity = 1 if token in POSITIVE_WORDS else -1 if token in NEGATIVE_WORDS else 0
-        if polarity == 0:
-            continue
-
-        previous_tokens = tokens[max(0, index - 3):index]
-        if any(previous in NEGATORS for previous in previous_tokens):
-            polarity *= -1
-
-        if polarity > 0:
-            positive_score += 1
-        else:
-            negative_score += 1
-
-    if positive_score > negative_score:
-        predicted = "positivo"
-    elif negative_score > positive_score:
-        predicted = "negativo"
-    else:
-        predicted = "neutral"
-
-    return predicted, positive_score, negative_score
 
 
 def load_comments(csv_path: Path) -> list[dict]:
@@ -114,61 +49,56 @@ def load_comments(csv_path: Path) -> list[dict]:
         comment_id = row["comentario_id"].strip()
         product_id = row["product_id"].strip()
         reference = row["sentimiento_referencia"].strip().lower()
-
         if not comment_id or comment_id in seen_ids:
             raise ValueError(f"Identificador vacío o repetido: {comment_id!r}")
         seen_ids.add(comment_id)
-
         if product_id not in PRODUCT_NAMES:
             raise ValueError(f"Categoría no reconocida en {comment_id}: {product_id}")
         if reference not in SENTIMENTS:
             raise ValueError(f"Sentimiento de referencia no válido en {comment_id}: {reference}")
         if not row["comentario"].strip():
             raise ValueError(f"Comentario vacío: {comment_id}")
-
     return rows
 
 
-def calculate_evaluation(rows: list[dict]) -> dict:
-    matrix = {real: {predicted: 0 for predicted in SENTIMENTS} for real in SENTIMENTS}
-    for row in rows:
-        matrix[row["sentimiento_referencia"]][row["sentimiento_predicho"]] += 1
+def label_from_model(output) -> str:
+    raw_label = getattr(output, "output", None)
+    if raw_label is None:
+        raise ValueError("El modelo no devolvió una etiqueta de sentimiento.")
+    key = str(getattr(raw_label, "value", raw_label)).upper()
+    if key not in MODEL_LABELS:
+        raise ValueError(f"Etiqueta inesperada devuelta por el modelo: {key}")
+    return MODEL_LABELS[key]
 
-    per_class = []
-    f1_values = []
-    total_correct = 0
 
-    for sentiment in SENTIMENTS:
-        true_positive = matrix[sentiment][sentiment]
-        support = sum(matrix[sentiment].values())
-        predicted_total = sum(matrix[real][sentiment] for real in SENTIMENTS)
-        precision = true_positive / predicted_total if predicted_total else 0.0
-        recall = true_positive / support if support else 0.0
-        f1 = (
-            2 * precision * recall / (precision + recall)
-            if precision + recall else 0.0
-        )
-        if support:
-            f1_values.append(f1)
-        total_correct += true_positive
-        per_class.append({
-            "sentimiento": sentiment,
-            "soporte": support,
-            "predicciones": predicted_total,
-            "precision": round(precision, 4),
-            "recall": round(recall, 4),
-            "f1": round(f1, 4),
-        })
-
-    total = len(rows)
+def build_evaluation(rows: list[dict]) -> dict:
+    y_true = [row["sentimiento_referencia"] for row in rows]
+    y_pred = [row["sentimiento_predicho"] for row in rows]
+    report = classification_report(
+        y_true, y_pred, labels=list(SENTIMENTS),
+        target_names=list(SENTIMENTS), output_dict=True, zero_division=0,
+    )
+    matrix = confusion_matrix(y_true, y_pred, labels=list(SENTIMENTS))
     return {
-        "total_comentarios": total,
-        "aciertos": total_correct,
-        "errores": total - total_correct,
-        "accuracy": round(total_correct / total, 4) if total else 0.0,
-        "f1_macro": round(sum(f1_values) / len(f1_values), 4) if f1_values else 0.0,
-        "matriz_confusion": matrix,
-        "metricas_por_sentimiento": per_class,
+        "total_comentarios": len(rows),
+        "aciertos": sum(real == predicted for real, predicted in zip(y_true, y_pred)),
+        "errores": sum(real != predicted for real, predicted in zip(y_true, y_pred)),
+        "accuracy": round(float(accuracy_score(y_true, y_pred)), 4),
+        "f1_macro": round(float(report["macro avg"]["f1-score"]), 4),
+        "matriz_confusion": {
+            real: {pred: int(matrix[i][j]) for j, pred in enumerate(SENTIMENTS)}
+            for i, real in enumerate(SENTIMENTS)
+        },
+        "metricas_por_sentimiento": [
+            {
+                "sentimiento": label,
+                "soporte": int(report[label]["support"]),
+                "precision": round(float(report[label]["precision"]), 4),
+                "recall": round(float(report[label]["recall"]), 4),
+                "f1": round(float(report[label]["f1-score"]), 4),
+            }
+            for label in SENTIMENTS
+        ],
     }
 
 
@@ -185,6 +115,7 @@ def build_product_summary(rows: list[dict]) -> dict:
                 "comentario_id": row["comentario_id"],
                 "comentario": row["comentario"],
                 "sentimiento": row["sentimiento_predicho"],
+                "confianza": row["confianza"],
             }
             for row in product_rows
         ]
@@ -192,7 +123,7 @@ def build_product_summary(rows: list[dict]) -> dict:
             "product_id": product_id,
             "producto": PRODUCT_NAMES[product_id],
             "total_comentarios": len(product_rows),
-            "sentimientos": {sentiment: counts.get(sentiment, 0) for sentiment in SENTIMENTS},
+            "sentimientos": {label: counts.get(label, 0) for label in SENTIMENTS},
             "comentarios_negativos": [
                 item for item in comments if item["sentimiento"] == "negativo"
             ],
@@ -202,17 +133,19 @@ def build_product_summary(rows: list[dict]) -> dict:
     products.sort(key=lambda item: item["producto"])
     return {
         "fuente": "nlp-lab/dataset/comentarios_clientes.csv",
-        "metodo": "clasificacion lexica basada en reglas",
+        "metodo": "modelo Transformer preentrenado (PySentimiento, español)",
         "total_comentarios": len(rows),
         "productos": products,
         "nota": (
-            "Los sentimientos son predicciones de un diccionario y reglas simples. "
-            "No equivalen a una comprensión completa del contexto o la ironía."
+            "Modelo preentrenado para análisis de sentimiento en español. "
+            "El modelo de referencia se entrenó principalmente con publicaciones de redes sociales; "
+            "su rendimiento puede variar en opiniones comerciales. Los comentarios del dataset son simulados."
         ),
     }
 
 
-def write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
+def write_csv(path: Path, rows: list[dict]) -> None:
+    fields = list(rows[0].keys())
     with path.open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
@@ -221,18 +154,10 @@ def write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Limpia, tokeniza y clasifica comentarios de clientes en español."
+        description="Clasifica comentarios en español con un Transformer preentrenado."
     )
-    parser.add_argument(
-        "--entrada", type=Path,
-        default=Path("dataset/comentarios_clientes.csv"),
-        help="CSV de opiniones con etiquetas de referencia.",
-    )
-    parser.add_argument(
-        "--salida", type=Path,
-        default=Path("salida"),
-        help="Carpeta de resultados del análisis.",
-    )
+    parser.add_argument("--entrada", type=Path, default=Path("dataset/comentarios_clientes.csv"))
+    parser.add_argument("--salida", type=Path, default=Path("salida"))
     args = parser.parse_args()
 
     try:
@@ -240,52 +165,57 @@ def main() -> int:
         output_dir = args.salida if args.salida.is_absolute() else BASE / args.salida
         source_rows = load_comments(csv_path)
 
+        print("Cargando el modelo preentrenado de análisis de sentimientos en español...")
+        analyzer = create_analyzer(task="sentiment", lang="es")
+        model_outputs = analyzer.predict([row["comentario"] for row in source_rows])
+        if not isinstance(model_outputs, (list, tuple)):
+            model_outputs = [model_outputs]
+        if len(model_outputs) != len(source_rows):
+            raise ValueError("El modelo devolvió una cantidad inesperada de predicciones.")
+
         analysed = []
-        for row in source_rows:
-            tokens = tokenize(row["comentario"])
-            predicted, positive_score, negative_score = classify_sentiment(tokens)
+        for row, prediction in zip(source_rows, model_outputs):
+            probabilities = {
+                str(label).upper(): float(score)
+                for label, score in prediction.probas.items()
+            }
+            predicted = label_from_model(prediction)
             analysed.append({
                 "comentario_id": row["comentario_id"],
                 "product_id": row["product_id"],
                 "producto": row["producto"],
                 "comentario": row["comentario"],
-                "texto_limpio": " ".join(tokens),
-                "tokens": " | ".join(tokens),
                 "sentimiento_referencia": row["sentimiento_referencia"].strip().lower(),
                 "sentimiento_predicho": predicted,
                 "acierto": predicted == row["sentimiento_referencia"].strip().lower(),
-                "puntaje_positivo": positive_score,
-                "puntaje_negativo": negative_score,
+                "confianza": round(max(probabilities.values()), 4),
+                "probabilidad_positivo": round(probabilities.get("POS", 0.0), 4),
+                "probabilidad_negativo": round(probabilities.get("NEG", 0.0), 4),
+                "probabilidad_neutral": round(probabilities.get("NEU", 0.0), 4),
             })
 
         output_dir.mkdir(parents=True, exist_ok=True)
-        write_csv(
-            output_dir / "comentarios_analizados.csv",
-            analysed,
-            list(analysed[0].keys()),
-        )
-
-        evaluation = calculate_evaluation(analysed)
+        write_csv(output_dir / "comentarios_analizados.csv", analysed)
+        evaluation = build_evaluation(analysed)
         (output_dir / "evaluacion_sentimientos.json").write_text(
-            json.dumps(evaluation, ensure_ascii=False, indent=2),
-            encoding="utf-8",
+            json.dumps(evaluation, ensure_ascii=False, indent=2), encoding="utf-8"
         )
-
         summary = build_product_summary(analysed)
         (output_dir / "resumen_sentimientos.json").write_text(
-            json.dumps(summary, ensure_ascii=False, indent=2),
-            encoding="utf-8",
+            json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-        print("Análisis de opiniones finalizado.")
-        print(f"  Comentarios procesados: {len(analysed)}")
-        print(f"  Accuracy de referencia: {evaluation['accuracy'] * 100:.1f}%")
+        print("Análisis finalizado.")
+        print(f"  Comentarios: {len(analysed)}")
+        print(f"  Accuracy frente a las etiquetas de referencia: {evaluation['accuracy'] * 100:.1f}%")
         print(f"  F1 macro: {evaluation['f1_macro'] * 100:.1f}%")
         print(f"  Resultados: {output_dir.resolve()}")
-        print("  Archivo para el sistema conversacional: resumen_sentimientos.json")
-        print("\nNota: el método es léxico y basado en reglas; revisa los errores antes de interpretarlo.")
+        print("  Archivo que utilizará el chatbot: resumen_sentimientos.json")
+        print("Revisa los desacuerdos: el modelo es general y el dataset contiene opiniones simuladas.")
         return 0
 
+    except ImportError as exc:
+        parser.exit(1, f"ERROR: falta una dependencia. Ejecuta: python -m pip install -r nlp-lab/requirements.txt\nDetalle: {exc}\n")
     except (FileNotFoundError, ValueError, OSError, csv.Error, json.JSONDecodeError) as exc:
         parser.exit(1, f"ERROR: {exc}\n")
 
