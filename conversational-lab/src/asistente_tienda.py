@@ -228,6 +228,8 @@ def answer_most_present(shelves: list[dict]) -> str:
 def answer_most_absent(shelves: list[dict]) -> str:
     summary = aggregate_inventory(shelves)
     maximum = max(item["absent_shelves"] for item in summary.values())
+    if maximum == 0:
+        return "Todos los productos aparecen al menos en una posición de cada uno de los anaqueles fotografiados."
     leaders = [
         (product_id, item["absent_shelves"])
         for product_id, item in summary.items()
@@ -350,12 +352,14 @@ def respond(query: str, shelves: list[dict],
     least_terms = (
         "menos", "menor", "escasea", "escasos", "escasas",
         "poca presencia", "menos presente", "menor presencia",
+        "menos posiciones", "menor cantidad", "menos cantidad", "menos espacio",
     )
     most_terms = (
         "predomina", "predominan", "prepondera", "preponderan", "abunda", "abundan",
         "mayor presencia", "mas presencia", "mas presente", "mas presentes",
         "mas exhibido", "mas exhibidos", "mas frecuente", "mas frecuentes",
-        "mas se repite", "mas repetido",
+        "mas se repite", "mas repetido", "mas posiciones", "mayor cantidad",
+        "mas cantidad", "mas espacio", "mas visible", "mas visibles",
     )
     time_terms = ("tiempo", "desde cuando", "desde hace", "hace cuanto", "dias", "semanas", "meses")
     fullness_terms = ("lleno", "llenos", "vacio", "vacios", "ocupacion", "ocupado", "ocupados")
@@ -406,7 +410,7 @@ def respond(query: str, shelves: list[dict],
         "No identifiqué la consulta. Puedes preguntar, por ejemplo:\\n"
         "- ¿Qué producto tiene menor presencia en los anaqueles?\\n"
         "- ¿Qué productos predominan en la exhibición?\\n"
-        "- ¿Qué productos no aparecen en la mayoría de los anaqueles?\\n"
+        "- ¿Qué productos faltan en más anaqueles?\\n"
         "- ¿Qué anaquel está más lleno?\\n"
         "- ¿Qué dicen los clientes sobre el cereal?\\n"
         "- ¿Qué quejas hay sobre la gaseosa?"
