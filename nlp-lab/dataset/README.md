@@ -8,7 +8,7 @@ Archivo: `comentarios_clientes.csv`
 - Ocho categorías: Conservas, Cereal, Galletas, Detergente, Jugo, Leche, Gaseosa y Agua.
 - Nueve comentarios por categoría.
 - Por cada categoría: tres positivos, tres negativos y tres neutrales.
-- Incluye ejemplos con negación y algunas expresiones implícitas para observar las limitaciones de un analizador léxico.
+- Incluye comentarios con negación, expresiones de valoración directa e indirecta para observar cómo responde el modelo preentrenado.
 
 ## Columnas
 
