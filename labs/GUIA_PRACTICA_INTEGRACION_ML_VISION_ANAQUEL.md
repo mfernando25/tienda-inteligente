@@ -69,7 +69,7 @@ salida_ml/modelo_hog_svm.yml
 salida_ml/modelo_hog_svm.json
 ~~~
 
-Con esto queda listo el modelo que se utilizará en la Iteración 01. Todos los pasos y archivos de esta práctica se trabajan durante la misma sesión; no se incluye un procedimiento de respaldo o recuperación posterior.
+Con esto queda listo el modelo que se utilizará en la Iteración 01.
 
 ---
 
