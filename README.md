@@ -17,12 +17,12 @@ Incluye rectificación de perspectiva, preparación del dataset, entrenamiento H
 Instrucciones técnicas: [cv-lab/README.md](cv-lab/README.md).
 
 ### Procesamiento de lenguaje natural
-Contiene un dataset de 72 comentarios simulados en español y un analizador léxico local con tokenización, manejo básico de negaciones y evaluación contra etiquetas de referencia.
+Contiene un dataset de 72 comentarios simulados en español, exploración de texto con NLTK y clasificación de sentimientos mediante un Transformer preentrenado para español, evaluado contra etiquetas de referencia.
 
 Instrucciones: [nlp-lab/README.md](nlp-lab/README.md).
 
 ### Sistemas conversacionales
-Asistente local basado en reglas que consulta el inventario estimado por visión y el resumen de sentimientos producido por PLN.
+Chatbot local que aprende a clasificar intenciones mediante TF-IDF y Regresión Logística, y consulta el inventario visual y el resumen de sentimientos.
 
 Instrucciones: [conversational-lab/README.md](conversational-lab/README.md).
 
@@ -51,7 +51,7 @@ Instrucciones: [conversational-lab/README.md](conversational-lab/README.md).
 - Ejecución local siempre que sea posible.
 - Sin dependencia de servicios externos de pago.
 - Instrucciones reproducibles para Windows.
-- El analizador de opiniones y el asistente utilizan la biblioteca estándar de Python.
+- La Sesión 2 utiliza PySentimiento, NLTK y scikit-learn; los modelos se preparan antes de la práctica.
 
 ## Estado
 
