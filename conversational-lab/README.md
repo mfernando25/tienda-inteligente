@@ -12,7 +12,7 @@ Este laboratorio conecta los resultados de visión artificial y PLN mediante un 
 
 ## Cómo funciona
 
-1. `TfidfVectorizer` transforma las preguntas de entrenamiento en características numéricas.
+1. `TfidfVectorizer` representa las preguntas mediante características de palabras y secuencias de caracteres.
 2. El stemming Snowball para español reduce variantes morfológicas (por ejemplo, producto/productos y predomina/predominan). `LogisticRegression` aprende a asociar esas características con una intención.
 3. El programa reserva el 25% de las preguntas para una validación inicial, muestra accuracy y F1 macro y luego ajusta el chatbot final con todos los ejemplos.
 4. El chatbot clasifica la pregunta nueva y muestra la intención detectada y el puntaje del clasificador.
