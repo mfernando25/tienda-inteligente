@@ -11,7 +11,15 @@ Procesar comentarios de clientes en español, clasificarlos por sentimiento y co
 
 ## 1. Preparar el entorno
 
-Desde Git Bash, ubicarse en la carpeta raíz del repositorio:
+Esta segunda guía comienza **después de completar la guía de Sesión 1**. No repetir el entrenamiento ni la evaluación visual.
+
+Al terminar la primera guía, la terminal suele quedar dentro de `cv-lab/`. Volver a la raíz del repositorio:
+
+~~~bash
+cd ..
+~~~
+
+Actualizar el repositorio si hay cambios nuevos y comprobar Python:
 
 ~~~bash
 git pull
