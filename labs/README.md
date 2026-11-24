@@ -2,8 +2,12 @@
 
 ## Guías disponibles
 
-- [Integración de Machine Learning y visión por computadora: clasificación del anaquel](GUIA_PRACTICA_INTEGRACION_ML_VISION_ANAQUEL.md)
+- [Cierre de la sesión 1: inferencia del anaquel completo](GUIA_PRACTICA_INTEGRACION_ML_VISION_ANAQUEL.md)
 
-La guía integra los componentes disponibles en \`cv-lab/\` y plantea como actividad de laboratorio construir \`predecir_anaquel.py\`, ejecutar la clasificación de las 32 posiciones y contrastar el resultado con el JSON de referencia.
+La guía parte del modelo HOG + SVM que los grupos ya entrenaron. La actividad pendiente procesa 15 fotografías nuevas de anaqueles completos y guarda las predicciones por iteración y categoría.
 
-Las fotografías, modelos entrenados y resultados permanecen localmente en cada equipo. Solo se versiona el código fuente y la documentación.
+La sesión 2 tendrá una guía independiente para PLN y Sistemas conversacionales.
+
+## Pautas del proyecto
+
+- [Pautas de continuidad de la Unidad 4](../docs/PAUTAS_CONTINUIDAD_UNIDAD4.md)
