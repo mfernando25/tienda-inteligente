@@ -53,7 +53,7 @@ El chatbot utiliza aprendizaje automático para identificar intenciones, pero no
 
 Las consultas se plantean como necesidades de negocio: menor y mayor presencia de productos, ausencias en las fotografías, ocupación de anaqueles, inventario visible por categoría y análisis de opiniones/quejas. No se exige recordar códigos de captura. Los cinco JPG representan cinco anaqueles distintos, no un registro temporal del mismo anaquel; por tanto, no permiten inferir cuánto tiempo lleva faltando un producto ni el stock del almacén.
 
-La práctica completa debe ejecutarse en aproximadamente 60 minutos de clase. La instalación de dependencias y la primera descarga del modelo Transformer son preparación previa y no forman parte de esos 60 minutos. Se usa un entorno independiente `.venv-sesion2`, sin modificar el entorno de visión de la Sesión 1. Mantener esta práctica en su segunda guía; no incorporarla en la guía de Sesión 1.
+La práctica completa debe ejecutarse en aproximadamente 60 minutos de clase. La instalación de dependencias y la primera descarga del modelo Transformer son preparación previa y no forman parte de esos 60 minutos. PyTorch se instala con la rueda CPU (`python -m pip install torch --index-url https://download.pytorch.org/whl/cpu`) para evitar depender de GPU NVIDIA; después se instala `nlp-lab/requirements.txt` y se inicializa el modelo de español. Se usa un entorno independiente `.venv-sesion2`, sin modificar el entorno de visión de la Sesión 1. Mantener esta práctica en su segunda guía; no incorporarla en la guía de Sesión 1.
 
 ## 3. Iteraciones de evaluación visual
 
