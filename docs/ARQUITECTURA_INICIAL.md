@@ -1,5 +1,7 @@
 # Arquitectura inicial del proyecto
 
+> **Estado y decisiones vigentes:** este documento conserva el planteamiento inicial. Para la secuencia actual de sesiones, las iteraciones de evaluación, los límites técnicos y la continuidad con el examen, consultar [PAUTAS_CONTINUIDAD_UNIDAD4.md](PAUTAS_CONTINUIDAD_UNIDAD4.md). En caso de diferencia, prevalece ese documento de continuidad.
+
 ## Contexto
 
 El proyecto se desarrollará para la Unidad 4 de Inteligencia de Negocios. Los equipos trabajarán en grupos de 4 a 7 estudiantes y mantendrán los mismos integrantes durante los dos laboratorios y el examen práctico.
