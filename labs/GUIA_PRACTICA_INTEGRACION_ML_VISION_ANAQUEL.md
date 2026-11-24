@@ -15,7 +15,10 @@ cd tienda-inteligente/cv-lab
 py -m venv .venv
 source .venv/Scripts/activate
 python -m pip install -r requirements.txt
+cd ..
 ~~~
+
+Al terminar, la terminal queda en la raíz del repositorio para continuar con el paso 1.
 
 ### Si el repositorio ya está clonado
 
