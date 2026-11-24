@@ -158,6 +158,101 @@ def answer_inventory_shelf(shelves: list[dict], capture_id: str | None,
     return "\n".join(responses)
 
 
+def aggregate_inventory(shelves: list[dict]) -> dict[str, dict]:
+    """Aggregate visible product positions across the photographed shelves."""
+    summary = {
+        product_id: {"positions": 0, "present_shelves": 0}
+        for product_id in PRODUCTS
+    }
+    for shelf in shelves:
+        counts = shelf.get("predicted_counts", {})
+        for product_id in PRODUCTS:
+            count = int(counts.get(product_id, 0) or 0)
+            summary[product_id]["positions"] += count
+            if count > 0:
+                summary[product_id]["present_shelves"] += 1
+    for data in summary.values():
+        data["absent_shelves"] = len(shelves) - data["present_shelves"]
+    return summary
+
+
+def format_tied_products(rows: list[tuple[str, int]], value_label: str) -> str:
+    return "; ".join(
+        f"{PRODUCTS[product_id]['name']} ({value} {value_label})"
+        for product_id, value in rows
+    )
+
+
+def answer_least_present(shelves: list[dict]) -> str:
+    summary = aggregate_inventory(shelves)
+    minimum = min(item["positions"] for item in summary.values())
+    leaders = [
+        (product_id, item["positions"])
+        for product_id, item in summary.items()
+        if item["positions"] == minimum
+    ]
+    return (
+        "Productos con menor presencia en el conjunto de anaqueles: "
+        + format_tied_products(leaders, "posiciones visibles")
+        + f". Comparación realizada sobre {len(shelves)} fotografías de anaqueles."
+    )
+
+
+def answer_most_present(shelves: list[dict]) -> str:
+    summary = aggregate_inventory(shelves)
+    maximum = max(item["positions"] for item in summary.values())
+    leaders = [
+        (product_id, item["positions"])
+        for product_id, item in summary.items()
+        if item["positions"] == maximum
+    ]
+    total_occupied = sum(item["positions"] for item in summary.values())
+    share = maximum / total_occupied * 100 if total_occupied else 0.0
+    return (
+        "Productos con mayor presencia en el conjunto de anaqueles: "
+        + format_tied_products(leaders, "posiciones visibles")
+        + f". Cada categoría líder representa {share:.1f}% de las posiciones ocupadas"
+          " (considerando una categoría líder; el porcentaje conjunto aumenta si hay empate)."
+    )
+
+
+def answer_most_absent(shelves: list[dict]) -> str:
+    summary = aggregate_inventory(shelves)
+    maximum = max(item["absent_shelves"] for item in summary.values())
+    leaders = [
+        (product_id, item["absent_shelves"])
+        for product_id, item in summary.items()
+        if item["absent_shelves"] == maximum
+    ]
+    return (
+        "Productos que no aparecen en más anaqueles: "
+        + format_tied_products(leaders, f"de {len(shelves)} anaqueles")
+        + ". Esto indica ausencia en las fotografías analizadas, no falta de stock en almacén."
+    )
+
+
+def answer_shelf_occupancy(shelves: list[dict], fullest: bool) -> str:
+    ranked = sorted(
+        shelves,
+        key=lambda shelf: (
+            (shelf.get("occupied_predicted", 0) / shelf.get("total_positions", 1))
+            if shelf.get("total_positions", 0) else 0
+        ),
+        reverse=fullest,
+    )
+    if not ranked:
+        return "No hay anaqueles disponibles para comparar."
+    item = ranked[0]
+    total = item.get("total_positions", 0)
+    occupied = item.get("occupied_predicted", 0)
+    empty = item.get("empty_predicted", 0)
+    label = "mayor" if fullest else "menor"
+    return (
+        f"El anaquel con {label} ocupación es {item.get('capture_id', 'sin identificar')}: "
+        f"{occupied} de {total} posiciones ocupadas y {empty} vacías."
+    )
+
+
 def answer_product_opinions(opinion_by_id: dict[str, dict],
                             product_id: str, only_negative: bool) -> str:
     item = opinion_by_id.get(product_id)
@@ -225,21 +320,60 @@ def respond(query: str, shelves: list[dict],
         "queja", "quejas", "reclamo", "reclamos", "problema", "problemas",
     )
     inventory_terms = (
-        "inventario", "posicion", "posiciones", "anaquel", "espacio",
+        "inventario", "posicion", "posiciones", "anaquel", "anaqueles", "espacio",
         "espacios", "stock", "existencia", "existencias", "disponible",
         "disponibles", "surtido", "surtidos", "exhibe", "exhiben",
-        "cuanto", "cuanta", "cuantos", "cuantas",
+        "exhibicion", "producto", "productos", "cuanto", "cuanta", "cuantos", "cuantas",
+        "presencia", "presentes", "predomina", "predominan", "prepondera",
+        "preponderan", "abunda", "abundan", "escasea", "escasos", "escasas",
+        "falta", "faltan", "ausente", "ausentes", "menos", "menor", "mas",
+        "mayor", "lleno", "llenos", "vacio", "vacios", "completo", "completos",
     )
+
+    missing_terms = ("falta", "faltan", "ausente", "ausentes", "no aparece", "no aparecen")
+    least_terms = ("menos", "menor", "escasea", "escasos", "escasas", "poca presencia")
+    most_terms = (
+        "predomina", "predominan", "prepondera", "preponderan", "abunda", "abundan",
+        "mayor presencia", "mas presencia", "mas exhibido", "mas exhibidos",
+    )
+    time_terms = ("tiempo", "desde cuando", "desde hace", "hace cuanto", "dias", "semanas", "meses")
+    fullness_terms = ("lleno", "llenos", "vacio", "vacios", "ocupacion", "ocupado", "ocupados")
 
     asks_opinions = any(term in normalized for term in opinion_terms)
     asks_negative = any(term in normalized for term in negative_terms)
     asks_inventory = any(term in normalized for term in inventory_terms)
+    asks_missing = any(term in normalized for term in missing_terms)
+    asks_least = any(term in normalized for term in least_terms)
+    asks_most = any(term in normalized for term in most_terms)
+    asks_time = any(term in normalized for term in time_terms)
+    asks_fullness = any(term in normalized for term in fullness_terms)
 
     if asks_opinions and not product_id:
         return answer_most_negative(opinion_by_id)
 
     if asks_opinions and product_id:
         return answer_product_opinions(opinion_by_id, product_id, asks_negative)
+
+    if asks_time and (asks_inventory or asks_missing):
+        return (
+            "No puedo determinar desde hace cuánto falta un producto. "
+            "Los datos actuales son cinco fotografías de anaqueles distintos y no incluyen "
+            "fechas históricas ni registros de reposición."
+        )
+
+    if asks_fullness and asks_inventory and not product_id:
+        return answer_shelf_occupancy(shelves, fullest=not any(
+            term in normalized for term in ("vacio", "vacios")
+        ))
+
+    if asks_missing and not product_id:
+        return answer_most_absent(shelves)
+
+    if asks_least and not product_id:
+        return answer_least_present(shelves)
+
+    if asks_most and not product_id:
+        return answer_most_present(shelves)
 
     if asks_inventory and product_id:
         return answer_inventory_product(shelves, product_id, capture_id)
@@ -248,12 +382,13 @@ def respond(query: str, shelves: list[dict],
         return answer_inventory_shelf(shelves, capture_id, threshold)
 
     return (
-        "No identifiqué la consulta. Prueba con preguntas como:\n"
-        "- ¿Cómo está el inventario del anaquel 031?\n"
-        "- ¿Cuánto cereal se exhibe en el anaquel 031?\n"
-        "- ¿Qué dicen los clientes sobre el cereal?\n"
-        "- ¿Hay comentarios negativos sobre la gaseosa?\n"
-        "- ¿Qué problemas reportan los clientes sobre el detergente?"
+        "No identifiqué la consulta. Puedes preguntar, por ejemplo:\\n"
+        "- ¿Qué producto tiene menor presencia en los anaqueles?\\n"
+        "- ¿Qué productos predominan en la exhibición?\\n"
+        "- ¿Qué productos no aparecen en la mayoría de los anaqueles?\\n"
+        "- ¿Qué anaquel está más lleno?\\n"
+        "- ¿Qué dicen los clientes sobre el cereal?\\n"
+        "- ¿Qué quejas hay sobre la gaseosa?"
     )
 
 
