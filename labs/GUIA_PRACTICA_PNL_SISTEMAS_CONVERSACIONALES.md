@@ -3,127 +3,109 @@
 **Unidad 4 – Inteligencia de Negocios**  
 **Ejes 3 y 4:** Procesamiento de lenguaje natural y Sistemas conversacionales.
 
-Esta es la segunda guía de la Unidad 4. Complementa la guía de visión por computadora y reutiliza el inventario estimado que produjo la Sesión 1. No modifica ni reemplaza la primera guía.
+Esta guía continúa el proyecto iniciado en la Sesión 1. Reutiliza el inventario visual generado por el modelo HOG + SVM y añade el análisis de opiniones de clientes y un chatbot que aprende a reconocer intenciones.
 
 ## Objetivo
 
-Procesar comentarios de clientes en español, clasificarlos por sentimiento y construir un asistente local que responda consultas usando los resultados de PLN y visión por computadora.
+Construir una solución integrada que procese comentarios en español, clasifique sus sentimientos mediante un modelo preentrenado y permita consultar el inventario y las opiniones mediante preguntas en lenguaje natural.
 
-## 1. Preparar el entorno
+## Preparación previa: entorno y modelo
 
-Esta segunda guía comienza **después de completar la guía de Sesión 1**. No repetir el entrenamiento ni la evaluación visual.
+**Esta preparación debe realizarse antes de iniciar los 60 minutos de práctica.** La instalación de PyTorch y la descarga inicial del modelo pueden tomar varios minutos, según la conexión y el equipo.
 
-Al terminar la primera guía, la terminal suele quedar dentro de `cv-lab/`. Volver a la raíz del repositorio:
+La Sesión 1 deja la terminal dentro de `cv-lab/`. Desde Git Bash, vuelve a la raíz del repositorio:
 
 ~~~bash
 cd ..
+git pull
 ~~~
 
-Actualizar el repositorio si hay cambios nuevos y comprobar Python:
+Crea un entorno independiente para no modificar el entorno utilizado en visión por computadora:
 
 ~~~bash
-git pull
-python --version
+python -m venv .venv-sesion2
+source .venv-sesion2/Scripts/activate
+python -m pip install --upgrade pip
+python -m pip install -r nlp-lab/requirements.txt
 ~~~
 
-Se requiere Python 3.10 o superior. Esta práctica utiliza la biblioteca estándar; no requiere instalar paquetes externos ni activar el entorno virtual de OpenCV.
+La primera inicialización descarga el modelo de sentimientos en español. Realízala antes de la sesión:
 
-**Comprobar el archivo generado en la Sesión 1:** en el panel **Explorador** de VS Code, expande las carpetas **cv-lab → salida_ml → iteraciones → evaluacion_01** y verifica que aparezca **inventario_por_foto.json**.
+~~~bash
+python -c "from pysentimiento import create_analyzer; create_analyzer(task='sentiment', lang='es')"
+~~~
 
-No escribas ni ejecutes la ruta del archivo en la terminal. Solo ubícalo y verifica su presencia en el Explorador. Si no aparece, primero se debe completar la evaluación de visión por computadora de la primera guía.
+Se requiere Python 3.10 o superior y conexión a Internet para instalar las dependencias y descargar el modelo. Una vez preparado el entorno, abre la terminal desde la raíz del repositorio y verifica que el entorno `.venv-sesion2` esté activo.
 
-## 2. Explorar el dataset de opiniones
+**Verificar el resultado de la Sesión 1:** en el Explorador de VS Code, expande **cv-lab → salida_ml → iteraciones → evaluacion_01** y confirma que exista **inventario_por_foto.json**. No escribas la ruta del archivo en la terminal.
 
-En el panel **Explorador** de VS Code, expande **nlp-lab → dataset** y abre el archivo **comentarios_clientes.csv**. No escribas su ruta en la terminal.
+## 1. Comprender y explorar los comentarios
 
-El dataset contiene 72 comentarios simulados en español, distribuidos en ocho categorías:
+En el Explorador de VS Code, abre **nlp-lab → dataset → comentarios_clientes.csv**.
 
-- Conservas
-- Cereal
-- Galletas
-- Detergente
-- Jugo
-- Leche
-- Gaseosa
-- Agua
+El dataset contiene 72 comentarios simulados en español sobre ocho categorías de productos. Cada categoría cuenta con tres etiquetas de referencia positivas, tres negativas y tres neutrales.
 
-Cada categoría tiene nueve comentarios: tres positivos, tres negativos y tres neutrales.
+Observa el texto original y la columna `sentimiento_referencia`. Esta última es la etiqueta que permitirá evaluar las predicciones; no se entrega al modelo como parte del texto que debe clasificar.
 
-Columnas principales:
-- `comentario_id`: identificador del comentario.
-- `product_id`: identificador de categoría.
-- `producto`: nombre en español.
-- `comentario`: texto del cliente.
-- `sentimiento_referencia`: etiqueta de referencia para evaluar la clasificación.
+## 2. Procesar y clasificar sentimientos
 
-La etiqueta de referencia no se usa para predecir el sentimiento; se consulta después para comprobar el resultado.
-
-## 3. Analizar los sentimientos
-
-Desde la raíz del repositorio, ejecutar:
+Desde la raíz del repositorio, ejecuta:
 
 ~~~bash
 python nlp-lab/src/analizar_sentimientos.py
 ~~~
 
-El programa realiza automáticamente:
+El programa combina dos operaciones diferentes:
 
-1. **Normalización:** pasa el texto a minúsculas y elimina tildes para facilitar la comparación.
-2. **Tokenización:** separa el comentario en palabras.
-3. **Análisis léxico:** cuenta términos incluidos en diccionarios positivos y negativos.
-4. **Negación:** invierte la polaridad de términos cercanos a palabras como «no», «nunca» y «tampoco».
-5. **Clasificación:** asigna positivo, negativo o neutral.
-6. **Evaluación:** compara la predicción con `sentimiento_referencia`.
-7. **Agregación:** calcula los resultados por categoría y guarda los comentarios clasificados.
+1. **Exploración del texto con NLTK:** normaliza el comentario y muestra su división en tokens para observar cómo se representa el lenguaje.
+2. **Clasificación con PySentimiento:** envía el comentario original a un modelo Transformer preentrenado en español. El modelo devuelve una predicción positiva, negativa o neutral y las probabilidades asociadas.
+3. **Evaluación:** compara las predicciones con `sentimiento_referencia` y calcula accuracy, F1 macro y matriz de confusión.
+4. **Agrupación:** resume los resultados por producto para que el chatbot pueda consultarlos.
 
-### Archivos generados
+**Importante:** los tokens y el texto normalizado se incluyen para explorar el procesamiento textual; el modelo de sentimientos recibe el comentario original. Así se conserva el contexto y la puntuación del texto.
 
-Los resultados se crean automáticamente en la carpeta **nlp-lab → salida**. Desde el Explorador de VS Code, expande esas carpetas para consultar:
+### Revisar los resultados
 
-- **comentarios_analizados.csv:** incluye el texto limpio, tokens, puntajes, sentimiento predicho y etiqueta de referencia.
-- **evaluacion_sentimientos.json:** incluye accuracy, F1 macro, matriz de confusión y métricas por sentimiento.
-- **resumen_sentimientos.json:** resume los sentimientos y conserva los comentarios agrupados por producto. Este archivo alimentará el asistente conversacional.
+En el Explorador de VS Code, abre **nlp-lab → salida**. Examina:
 
-Abre **comentarios_analizados.csv** desde el Explorador de VS Code para observar los comentarios que el método clasificó de forma diferente a la referencia. No copies la ruta del archivo en la terminal. Revisa especialmente los casos de negación y expresiones implícitas.
+- **comentarios_analizados.csv:** texto original, texto normalizado, tokens, sentimiento de referencia, predicción y probabilidades.
+- **evaluacion_sentimientos.json:** accuracy, F1 macro y matriz de confusión.
+- **resumen_sentimientos.json:** sentimientos y comentarios agrupados por producto. Este archivo alimenta el chatbot.
 
-**Importante:** el método es léxico y basado en reglas. No comprende completamente el contexto, la ironía ni todas las expresiones. Un resultado alto sobre este dataset simulado no equivale a un sistema de análisis de opiniones listo para producción.
+**Actividad:** identifica dos comentarios en los que la predicción no coincida con la referencia. Analiza si el desacuerdo puede deberse al contexto, a una expresión comercial o a la diferencia entre el lenguaje de redes sociales y las opiniones sobre productos.
 
-## 4. Ejecutar e interactuar con el asistente conversacional
+PySentimiento utiliza un modelo preentrenado para español, entrenado principalmente con publicaciones de redes sociales. Su resultado en comentarios comerciales puede variar. Además, las opiniones de esta práctica son simuladas; las métricas no representan el rendimiento en clientes reales.
 
-El asistente consulta automáticamente dos resultados generados en las sesiones anteriores:
+## 3. Construir el sistema conversacional
 
-- El inventario visual **inventario_por_foto.json**, ubicado en **cv-lab → salida_ml → iteraciones → evaluacion_01**.
-- El resumen de opiniones **resumen_sentimientos.json**, ubicado en **nlp-lab → salida**.
+El chatbot utilizará dos fuentes generadas por el proyecto:
 
-No necesitas abrir, copiar ni ejecutar estos archivos. El programa los lee directamente.
+- El inventario visual de **cv-lab → salida_ml → iteraciones → evaluacion_01 → inventario_por_foto.json**.
+- El resumen de sentimientos de **nlp-lab → salida → resumen_sentimientos.json**.
 
-Ejecutar desde la raíz del repositorio:
+Ejecuta desde la raíz del repositorio:
 
 ~~~bash
 python conversational-lab/src/asistente_tienda.py
 ~~~
 
-El programa funciona en la terminal. Escribe tus consultas después del indicador `Tú:`.
+Al iniciar, el chatbot entrena un clasificador con las preguntas etiquetadas de **conversational-lab → dataset → intenciones.csv**.
 
-### ¿Es una IA o un chatbot?
+### ¿Cómo reconoce las preguntas?
 
-Es un **chatbot local basado en reglas** y constituye un sistema conversacional sencillo. Recibe preguntas escritas en lenguaje natural, identifica palabras clave y patrones para reconocer la intención y el producto, consulta los resultados de visión y PLN, y construye una respuesta.
+El sistema aplica aprendizaje automático supervisado:
 
-No es un modelo generativo como ChatGPT: no comprende cualquier pregunta, no mantiene una conversación abierta ni genera respuestas a partir de conocimiento general. Puede responder consultas del dominio de la tienda siempre que estén formuladas con términos que reconoce.
+1. **TF-IDF** transforma las preguntas de entrenamiento en características numéricas.
+2. **Regresión Logística** aprende a asociar esas características con una intención, por ejemplo, consultar inventario, identificar productos con menor presencia o preguntar por opiniones.
+3. El chatbot clasifica la nueva pregunta y muestra la intención detectada y el puntaje del clasificador.
+4. Reconoce el producto mencionado mediante un conjunto de entidades y alias.
+5. Consulta los JSON y construye una respuesta con los datos disponibles.
 
-### Cómo formular las preguntas
+No es un modelo generativo como ChatGPT. Es un sistema conversacional acotado al negocio de la tienda, pero la identificación de intenciones ya no depende solamente de una lista de palabras clave: utiliza un clasificador entrenado con ejemplos etiquetados.
 
-Las consultas deben expresar una necesidad del negocio. **No es necesario recordar el código de una fotografía ni indicar un anaquel específico.** Por defecto, las preguntas de inventario se responden considerando el conjunto de cinco anaqueles fotografiados.
+### Probar consultas de negocio
 
-- **Presencia de productos:** pregunta qué producto aparece menos, cuál predomina o qué categorías tienen mayor presencia.
-- **Ausencia en anaqueles:** pregunta qué productos no aparecen o en cuántos anaqueles no se detecta una categoría.
-- **Ocupación:** pregunta qué anaqueles están más llenos o más vacíos.
-- **Producto específico:** pregunta cuánto espacio o cuántas posiciones visibles ocupa una categoría; el asistente suma sus posiciones en las cinco fotografías.
-- **Opiniones y quejas:** pregunta qué dicen los clientes, qué opinan de un producto o qué comentarios negativos se clasificaron.
-
-Formula una consulta por vez. Puedes usar tus propias palabras, pero incluye términos que indiquen qué información buscas. El código de fotografía solo se utiliza cuando se desea consultar una imagen concreta, no es necesario para las preguntas generales.
-
-### Consultas de ejemplo
+No necesitas recordar códigos de fotografías ni mencionar un anaquel concreto para las consultas globales.
 
 **Inventario y exhibición:**
 
@@ -131,49 +113,65 @@ Formula una consulta por vez. Puedes usar tus propias palabras, pero incluye té
 ¿Qué producto tiene menor presencia en los anaqueles?
 ¿Qué productos predominan en la exhibición?
 ¿Qué productos faltan en más anaqueles?
-¿Qué anaqueles están más llenos?
-¿Cuánto espacio ocupa la leche en los anaqueles?
+¿Qué anaquel está más lleno?
+¿Cuánto espacio ocupa la leche?
 ~~~
 
 **Opiniones de clientes:**
 
 ~~~text
 ¿Qué dicen los clientes sobre el cereal?
-¿Qué producto recibe más comentarios negativos?
 ¿Qué quejas hay sobre la gaseosa?
+¿Qué producto recibe más comentarios negativos?
 ~~~
 
-**Consultas que requieren datos adicionales:**
+**Consulta que requiere información histórica:**
 
 ~~~text
-¿Qué productos llevan más tiempo agotados?
-¿Desde hace cuánto falta la leche?
+¿Desde hace cuánto falta el detergente?
 ~~~
 
-El asistente no puede responder las dos últimas preguntas: el proyecto contiene cinco fotografías de anaqueles distintos, pero no registra fechas de captura comparables, historial de disponibilidad ni reposiciones. Para conocer cuánto tiempo lleva faltando un producto se necesitarían datos históricos.
+El asistente debe indicar que no dispone de datos históricos. Las cinco fotografías corresponden a anaqueles distintos y no permiten calcular cuánto tiempo lleva faltando un producto.
 
-El inventario representa posiciones visibles (*facings*) en las fotografías, no unidades almacenadas en bodega. La comparación global suma las posiciones detectadas en las cinco fotografías; sirve para comparar la composición de esa muestra, no para afirmar el stock total de una tienda. Los sentimientos son resultados del analizador léxico, no opiniones reales verificadas.
+### Actividad: ampliar el aprendizaje del chatbot
 
-Escribir `ayuda` para ver ejemplos o `salir` para terminar. Si la consulta no coincide con las reglas implementadas, el asistente indicará que no pudo identificarla y mostrará ejemplos.
+Abre **conversational-lab → dataset → intenciones.csv** en VS Code.
 
-## 5. Interpretar y discutir
+1. Revisa cómo cada pregunta está asociada a una etiqueta de intención.
+2. Añade dos formas distintas de expresar una de las consultas, conservando la intención correcta.
+3. Guarda el archivo y reinicia el chatbot para que vuelva a entrenarse con los nuevos ejemplos.
+4. Prueba una pregunta nueva y observa qué intención detecta y qué puntaje devuelve.
 
-Responder:
+Esta actividad permite comprobar que el clasificador aprende de los ejemplos etiquetados. Si una pregunta está muy alejada de las expresiones de entrenamiento, puede clasificarla incorrectamente; por eso se deben ampliar y evaluar sus ejemplos.
 
-1. ¿Qué palabras o elementos de la pregunta ayudan al asistente a identificar la intención?
-2. ¿Qué sucede si se pregunta por un producto que no está incluido en las categorías?
-3. ¿Por qué dos preguntas con el mismo propósito pueden producir resultados diferentes si una no contiene las palabras que el asistente reconoce?
-4. ¿Qué diferencia existe entre un chatbot basado en reglas y un asistente generativo como ChatGPT?
-5. ¿Qué cambios permitirían ampliar las consultas que puede reconocer el asistente?
+## 4. Distribución de la práctica (60 minutos)
 
-## Entregables
+| Tiempo | Actividad |
+|---|---|
+| 0–5 min | Conectar los resultados de visión artificial con la nueva funcionalidad de la tienda. |
+| 5–15 min | Explorar normalización y tokenización de comentarios. |
+| 15–27 min | Ejecutar el análisis de sentimientos y revisar desacuerdos. |
+| 27–45 min | Entrenar, ampliar y probar el clasificador de intenciones. |
+| 45–55 min | Consultar inventario y opiniones desde el chatbot. |
+| 55–60 min | Interpretar resultados y discutir limitaciones. |
 
-En el Explorador de VS Code, ubica la carpeta **nlp-lab → salida**. Allí se encuentran los tres resultados que se generan al ejecutar el analizador:
+La instalación de dependencias y la primera descarga del modelo se realizan antes de estos 60 minutos.
 
-- **comentarios_analizados.csv**
-- **evaluacion_sentimientos.json**
-- **resumen_sentimientos.json**
+## 5. Entregables
 
-Además, realiza al menos cuatro consultas al asistente: una para identificar el producto con menor presencia, otra sobre los productos predominantes, una sobre opiniones y otra sobre comentarios negativos. Registra las preguntas realizadas y las respuestas obtenidas. Intenta también una pregunta que requiera información histórica y explica por qué el asistente no puede responderla. Redacta una conclusión breve sobre las limitaciones del análisis léxico y del sistema conversacional.
+1. Los tres archivos generados en **nlp-lab → salida**:
+   - `comentarios_analizados.csv`
+   - `evaluacion_sentimientos.json`
+   - `resumen_sentimientos.json`
+2. Dos nuevas preguntas etiquetadas agregadas al dataset de intenciones.
+3. Registro de al menos tres consultas al chatbot: una sobre inventario, una sobre opiniones y otra sobre comentarios negativos.
+4. Una explicación breve de un desacuerdo del análisis de sentimientos y una limitación del clasificador de intenciones.
 
-Los datos y resultados generados localmente no se suben al repositorio. El código y el dataset base de la práctica sí se versionan.
+## 6. Consideraciones
+
+- El inventario representa posiciones visibles (*facings*) en cinco fotografías, no unidades disponibles en almacén.
+- La ausencia de un producto en una fotografía no demuestra que esté agotado en el almacén.
+- No se puede inferir la duración de un faltante sin registros históricos.
+- El modelo de sentimientos está preentrenado en español, pero su dominio de entrenamiento no coincide necesariamente con opiniones comerciales.
+- El chatbot utiliza aprendizaje automático para clasificar intenciones; las entidades y las respuestas se resuelven mediante reglas y plantillas. No es un LLM ni comprende consultas arbitrarias.
+- El entorno `.venv-sesion2` y los resultados de `nlp-lab/salida/` son locales y no se suben al repositorio.
