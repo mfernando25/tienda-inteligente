@@ -126,37 +126,60 @@ python comparar_referencia.py --detecciones salida_cv/detecciones.csv --referenc
 - La siguiente fase, después de evaluar esta línea base, será construir un generador independiente con nuevos diseños visuales para probar qué tanto generaliza el modelo.
 
 
-## 7. Inferencia por lotes sobre anaqueles completos
+## 7. Inferencia y evaluación con nuevas fotografías
 
-Después de entrenar el modelo, el programa \`predecir_anaqueles.py\` aplica el clasificador a un conjunto de fotografías JPG nuevas. No necesita JSON del generador y no vuelve a entrenar.
+El programa `predecir_anaqueles.py` aplica el modelo HOG + SVM a fotografías nuevas y, al terminar todas las predicciones, las compara con los JSON de referencia.
 
-Carpeta de entrada para la primera iteración:
+### Estructura de entrada
 
 ~~~text
-dataset/iteraciones/iteracion_01/entrada/
+dataset/iteraciones/evaluacion_01/
+├── entrada/
+│   ├── captura_031.jpg
+│   ├── ...
+│   └── captura_035.jpg
+└── referencias/
+    ├── captura_031.json
+    ├── ...
+    └── captura_035.json
 ~~~
 
-Desde \`cv-lab/\`:
+Cada JPG debe tener un JSON de la misma distribución y con el mismo nombre base. El JSON no se utiliza para clasificar: se abre únicamente después de completar las predicciones.
+
+### Ejecutar
+
+Desde `cv-lab/`, con el entorno virtual activado:
 
 ~~~bash
 python predecir_anaqueles.py
 ~~~
 
-Por cada fotografía, seleccionar las cuatro esquinas de la cuadrícula 4×8. El programa utiliza la configuración HOG y las clases guardadas con el modelo, clasifica las 32 posiciones y organiza los recortes según la clase predicha.
+El programa solicita seleccionar las cuatro esquinas de cada cuadrícula 4×8. Después clasifica las 32 posiciones por fotografía y compara las clases predichas con las etiquetas reales del JSON.
 
-Los resultados quedan en \`salida_ml/iteraciones/iteracion_01/\`:
+### Resultados
 
-- \`anaqueles_anotados/\`: fotografías rectificadas y anotadas.
-- \`recortes_predichos/\`: recortes organizados por clase.
-- \`predicciones.csv\`: una fila por posición.
-- \`inventario_por_foto.csv\` y \`inventario_por_foto.json\`: conteos estimados para cada fotografía.
+Se guardan en `salida_ml/iteraciones/evaluacion_01/`:
 
-Cada fotografía representa un anaquel independiente; no sumar los conteos de distintas fotografías como un único inventario físico. Los resultados de una nueva iteración deben guardarse en otra carpeta, sin sobrescribir las iteraciones anteriores.
+- `informe_evaluacion.html`: informe visual con accuracy, precision, recall, F1, matriz de confusión, errores y anaqueles anotados.
+- `predicciones.csv`: detalle de cada posición, clase real y predicha.
+- `metricas_por_clase.csv`: métricas por categoría.
+- `matriz_confusion.csv`: valores de la matriz.
+- `errores.csv`: posiciones mal clasificadas.
+- `evaluacion.json`: resumen estructurado.
+- `anaqueles_anotados/` y `recortes_predichos/`: imágenes de salida.
 
-Para reemplazar los resultados de la misma iteración:
+Abrir el informe desde Windows:
 
 ~~~bash
-python predecir_anaqueles.py --sobrescribir
+explorer.exe salida_ml/iteraciones/evaluacion_01/informe_evaluacion.html
 ~~~
 
-La clasificación utiliza solamente el JPG y el modelo. Si se dispone del JSON original como referencia, puede compararse después, pero no se pasa al programa de predicción.
+Para evaluar otro lote, indicar nuevas carpetas de entrada, referencias y salida. Por ejemplo:
+
+~~~bash
+python predecir_anaqueles.py --entrada dataset/iteraciones/evaluacion_02/entrada --referencias dataset/iteraciones/evaluacion_02/referencias --salida salida_ml/iteraciones/evaluacion_02
+~~~
+
+Si se vuelve a ejecutar una evaluación en una carpeta de salida que ya contiene resultados, añadir `--sobrescribir`. Esto elimina y genera nuevamente esa carpeta de resultados.
+
+La evaluación es exploratoria: las posiciones de una misma fotografía comparten condiciones de captura y no son observaciones independientes. El modelo se prueba con las ilustraciones del generador, no con empaques comerciales reales.
