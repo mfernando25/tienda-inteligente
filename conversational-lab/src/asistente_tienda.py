@@ -1,49 +1,32 @@
 #!/usr/bin/env python3
-"""Asistente local por reglas para consultar inventario visual y opiniones."""
+"""Chatbot que aprende a clasificar intenciones y consulta datos de la tienda."""
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
-import sys
 import unicodedata
+from collections import Counter
 from pathlib import Path
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
+INTENT_DATASET = Path(__file__).resolve().parents[1] / "dataset" / "intenciones.csv"
+MIN_INTENT_SCORE = 0.16
 
 PRODUCTS = {
-    "canned": {
-        "name": "Conservas",
-        "aliases": ("conserva", "conservas", "lata", "latas"),
-    },
-    "cereal": {
-        "name": "Cereal",
-        "aliases": ("cereal", "cereales"),
-    },
-    "cookies": {
-        "name": "Galletas",
-        "aliases": ("galleta", "galletas"),
-    },
-    "detergent": {
-        "name": "Detergente",
-        "aliases": ("detergente", "detergentes", "jabon", "lavado"),
-    },
-    "juice": {
-        "name": "Jugo",
-        "aliases": ("jugo", "jugos", "zumo"),
-    },
-    "milk": {
-        "name": "Leche",
-        "aliases": ("leche",),
-    },
-    "soda": {
-        "name": "Gaseosa",
-        "aliases": ("gaseosa", "gaseosas", "refresco"),
-    },
-    "water": {
-        "name": "Agua",
-        "aliases": ("agua", "aguas"),
-    },
+    "canned": {"name": "Conservas", "aliases": ("conserva", "conservas", "lata", "latas")},
+    "cereal": {"name": "Cereal", "aliases": ("cereal", "cereales")},
+    "cookies": {"name": "Galletas", "aliases": ("galleta", "galletas")},
+    "detergent": {"name": "Detergente", "aliases": ("detergente", "detergentes", "jabon", "lavado")},
+    "juice": {"name": "Jugo", "aliases": ("jugo", "jugos", "zumo")},
+    "milk": {"name": "Leche", "aliases": ("leche",)},
+    "soda": {"name": "Gaseosa", "aliases": ("gaseosa", "gaseosas", "refresco")},
+    "water": {"name": "Agua", "aliases": ("agua", "aguas")},
 }
 
 
@@ -61,21 +44,53 @@ def load_json(path: Path, description: str) -> dict:
         raise ValueError(f"El archivo {description} no contiene JSON válido: {path}") from exc
 
 
-def validate_sources(inventory: dict, opinions: dict) -> tuple[list[dict], dict[str, dict]]:
+def load_sources(inventory_path: Path, opinions_path: Path) -> tuple[list[dict], dict[str, dict]]:
+    inventory = load_json(inventory_path, "inventario visual")
+    opinions = load_json(opinions_path, "resumen de sentimientos")
     shelves = inventory.get("shelves")
     products = opinions.get("productos")
     if not isinstance(shelves, list) or not shelves:
         raise ValueError("El JSON de inventario no contiene una lista 'shelves'.")
     if not isinstance(products, list) or not products:
         raise ValueError("El JSON de opiniones no contiene una lista 'productos'.")
-
     for shelf in shelves:
         if not isinstance(shelf.get("predicted_counts"), dict):
-            raise ValueError("Una entrada de inventario no contiene 'predicted_counts'.")
+            raise ValueError("Una entrada del inventario no contiene 'predicted_counts'.")
     opinion_by_id = {
         item.get("product_id"): item for item in products if item.get("product_id")
     }
     return shelves, opinion_by_id
+
+
+def train_intent_classifier(dataset_path: Path):
+    if not dataset_path.is_file():
+        raise FileNotFoundError(f"No se encontró el dataset de intenciones: {dataset_path}")
+    with dataset_path.open("r", newline="", encoding="utf-8-sig") as handle:
+        rows = list(csv.DictReader(handle))
+    if len(rows) < 20:
+        raise ValueError("El dataset de intenciones necesita al menos 20 ejemplos etiquetados.")
+    if not all(row.get("consulta", "").strip() and row.get("intencion", "").strip() for row in rows):
+        raise ValueError("Cada fila de intenciones debe incluir consulta e intencion.")
+
+    questions = [row["consulta"].strip() for row in rows]
+    labels = [row["intencion"].strip() for row in rows]
+    if len(set(labels)) < 3:
+        raise ValueError("El dataset debe contener al menos tres intenciones distintas.")
+
+    # TF-IDF convierte las preguntas en características numéricas; la regresión
+    # logística aprende a asociarlas con las intenciones etiquetadas.
+    classifier = make_pipeline(
+        TfidfVectorizer(
+            lowercase=True,
+            strip_accents="unicode",
+            ngram_range=(1, 2),
+            sublinear_tf=True,
+            max_features=5000,
+        ),
+        LogisticRegression(max_iter=1500, class_weight="balanced", random_state=42),
+    )
+    classifier.fit(questions, labels)
+    return classifier, len(rows), len(set(labels))
 
 
 def find_product(query: str) -> str | None:
@@ -83,7 +98,7 @@ def find_product(query: str) -> str | None:
     matches = []
     for product_id, data in PRODUCTS.items():
         for alias in data["aliases"]:
-            if re.search(rf"\b{re.escape(alias)}\b", normalized):
+            if re.search(rf"\b{re.escape(normalize(alias))}\b", normalized):
                 matches.append((len(alias), product_id))
     if not matches:
         return None
@@ -91,85 +106,7 @@ def find_product(query: str) -> str | None:
     return matches[0][1]
 
 
-def find_capture(query: str) -> str | None:
-    # Acepta referencias como "captura_031" y "anaquel 031".
-    match = re.search(r"(?:captura|anaquel)[_ -]?(\d+)", normalize(query))
-    if not match:
-        return None
-    return f"captura_{match.group(1).zfill(3)}"
-
-
-def find_threshold(query: str) -> int | None:
-    normalized = normalize(query)
-    match = re.search(r"menos de\s+(\d+)", normalized)
-    if match:
-        return int(match.group(1))
-    return None
-
-
-def format_inventory(shelf: dict, product_id: str) -> str:
-    count = shelf["predicted_counts"].get(product_id, 0)
-    product = PRODUCTS[product_id]["name"]
-    return f"{shelf['capture_id']}: {product} = {count} posiciones visibles."
-
-
-def answer_inventory_product(shelves: list[dict], product_id: str,
-                             capture_id: str | None) -> str:
-    if capture_id is None:
-        total = sum(
-            int(shelf.get("predicted_counts", {}).get(product_id, 0) or 0)
-            for shelf in shelves
-        )
-        present = sum(
-            1 for shelf in shelves
-            if int(shelf.get("predicted_counts", {}).get(product_id, 0) or 0) > 0
-        )
-        return (
-            f"{PRODUCTS[product_id]['name']}: {total} posiciones visibles en total, "
-            f"presente en {present} de {len(shelves)} anaqueles fotografiados."
-        )
-
-    selected = [shelf for shelf in shelves if shelf.get("capture_id") == capture_id]
-    if not selected:
-        return f"No encuentro el anaquel solicitado: {capture_id}."
-    return "\n".join(format_inventory(shelf, product_id) for shelf in selected)
-
-
-def answer_inventory_shelf(shelves: list[dict], capture_id: str | None,
-                           threshold: int | None) -> str:
-    selected = [
-        shelf for shelf in shelves
-        if capture_id is None or shelf.get("capture_id") == capture_id
-    ]
-    if not selected:
-        available = ", ".join(shelf.get("capture_id", "?") for shelf in shelves)
-        return f"No encuentro {capture_id}. Anaqueles disponibles: {available}."
-
-    responses = []
-    for shelf in selected:
-        counts = shelf["predicted_counts"]
-        if threshold is not None:
-            below = [
-                f"{PRODUCTS[product_id]['name']} ({count})"
-                for product_id, count in counts.items()
-                if product_id in PRODUCTS and product_id != "empty" and count < threshold
-            ]
-            detail = ", ".join(below) if below else "ningún producto"
-            responses.append(
-                f"{shelf['capture_id']}: categorías con menos de {threshold} posiciones: {detail}."
-            )
-        else:
-            detail = ", ".join(
-                f"{PRODUCTS[product_id]['name']}={count}"
-                for product_id, count in counts.items()
-                if product_id in PRODUCTS
-            )
-            responses.append(f"{shelf['capture_id']}: {detail}.")
-    return "\n".join(responses)
-
-
 def aggregate_inventory(shelves: list[dict]) -> dict[str, dict]:
-    """Aggregate visible product positions across the photographed shelves."""
     summary = {
         product_id: {"positions": 0, "present_shelves": 0}
         for product_id in PRODUCTS
@@ -186,10 +123,10 @@ def aggregate_inventory(shelves: list[dict]) -> dict[str, dict]:
     return summary
 
 
-def format_tied_products(rows: list[tuple[str, int]], value_label: str) -> str:
+def format_products(items: list[tuple[str, int]], suffix: str) -> str:
     return "; ".join(
-        f"{PRODUCTS[product_id]['name']} ({value} {value_label})"
-        for product_id, value in rows
+        f"{PRODUCTS[product_id]['name']} ({count} {suffix})"
+        for product_id, count in items
     )
 
 
@@ -202,9 +139,9 @@ def answer_least_present(shelves: list[dict]) -> str:
         if item["positions"] == minimum
     ]
     return (
-        "Productos con menor presencia en el conjunto de anaqueles: "
-        + format_tied_products(leaders, "posiciones visibles")
-        + f". Comparación realizada sobre {len(shelves)} fotografías de anaqueles."
+        "Productos con menor presencia: "
+        + format_products(leaders, "posiciones visibles")
+        + f". Comparación basada en {len(shelves)} fotografías."
     )
 
 
@@ -216,64 +153,72 @@ def answer_most_present(shelves: list[dict]) -> str:
         for product_id, item in summary.items()
         if item["positions"] == maximum
     ]
-    total_occupied = sum(item["positions"] for item in summary.values())
-    collective_share = (maximum * len(leaders) / total_occupied * 100) if total_occupied else 0.0
+    occupied = sum(item["positions"] for item in summary.values())
+    percentage = maximum * len(leaders) / occupied * 100 if occupied else 0.0
     return (
-        "Productos con mayor presencia en el conjunto de anaqueles: "
-        + format_tied_products(leaders, "posiciones visibles")
-        + f". En conjunto representan {collective_share:.1f}% de las posiciones ocupadas."
+        "Productos con mayor presencia: "
+        + format_products(leaders, "posiciones visibles")
+        + f". En conjunto representan {percentage:.1f}% de las posiciones ocupadas."
     )
 
 
-def answer_most_absent(shelves: list[dict]) -> str:
+def answer_absences(shelves: list[dict]) -> str:
     summary = aggregate_inventory(shelves)
     maximum = max(item["absent_shelves"] for item in summary.values())
     if maximum == 0:
-        return "Todos los productos aparecen al menos en una posición de cada uno de los anaqueles fotografiados."
+        return "Todos los productos aparecen en las cinco fotografías analizadas."
     leaders = [
         (product_id, item["absent_shelves"])
         for product_id, item in summary.items()
         if item["absent_shelves"] == maximum
     ]
     details = "; ".join(
-        f"{PRODUCTS[product_id]['name']} (ausente en {value} de {len(shelves)} anaqueles)"
-        for product_id, value in leaders
+        f"{PRODUCTS[product_id]['name']} (ausente en {count} de {len(shelves)} fotografías)"
+        for product_id, count in leaders
     )
     return (
-        "Productos que no aparecen en más anaqueles: "
-        + details
-        + ". Esto indica ausencia en las fotografías analizadas, no falta de stock en almacén."
+        "Productos con más ausencias en la muestra: " + details
+        + ". Ausencia en la exhibición no demuestra falta de stock en almacén."
     )
 
 
-def answer_shelf_occupancy(shelves: list[dict], fullest: bool) -> str:
+def answer_occupancy(shelves: list[dict], query: str) -> str:
+    want_empty = any(term in normalize(query) for term in ("vacio", "vacios", "libre", "libres"))
     ranked = sorted(
         shelves,
         key=lambda shelf: (
-            (shelf.get("occupied_predicted", 0) / shelf.get("total_positions", 1))
-            if shelf.get("total_positions", 0) else 0
+            shelf.get("empty_predicted", 0) / shelf.get("total_positions", 1)
+            if shelf.get("total_positions", 0) else 0.0
         ),
-        reverse=fullest,
+        reverse=want_empty,
     )
-    if not ranked:
-        return "No hay anaqueles disponibles para comparar."
-    item = ranked[0]
-    total = item.get("total_positions", 0)
-    occupied = item.get("occupied_predicted", 0)
-    empty = item.get("empty_predicted", 0)
-    label = "mayor" if fullest else "menor"
+    selected = ranked[:2]
+    label = "más espacios libres" if want_empty else "mayor ocupación"
+    details = []
+    for item in selected:
+        total = item.get("total_positions", 0)
+        occupied = item.get("occupied_predicted", 0)
+        empty = item.get("empty_predicted", 0)
+        details.append(
+            f"{item.get('capture_id', 'sin identificar')}: "
+            f"{occupied}/{total} ocupadas y {empty} vacías"
+        )
+    return f"Anaqueles con {label}: " + "; ".join(details) + "."
+
+
+def answer_product_inventory(shelves: list[dict], product_id: str) -> str:
+    summary = aggregate_inventory(shelves)[product_id]
     return (
-        f"El anaquel con {label} ocupación es {item.get('capture_id', 'sin identificar')}: "
-        f"{occupied} de {total} posiciones ocupadas y {empty} vacías."
+        f"{PRODUCTS[product_id]['name']}: {summary['positions']} posiciones visibles "
+        f"en total, presente en {summary['present_shelves']} de {len(shelves)} fotografías."
     )
 
 
-def answer_product_opinions(opinion_by_id: dict[str, dict],
-                            product_id: str, only_negative: bool) -> str:
+def answer_product_opinions(opinion_by_id: dict[str, dict], product_id: str,
+                            negative_only: bool) -> str:
     item = opinion_by_id.get(product_id)
     if not item:
-        return f"No hay opiniones registradas para {PRODUCTS[product_id]['name']}."
-
+        return f"No hay comentarios disponibles para {PRODUCTS[product_id]['name']}."
     counts = item.get("sentimientos", {})
     name = item.get("producto", PRODUCTS[product_id]["name"])
     response = (
@@ -282,17 +227,14 @@ def answer_product_opinions(opinion_by_id: dict[str, dict],
         f"{counts.get('neutral', 0)} neutrales "
         f"({item.get('total_comentarios', 0)} comentarios analizados)."
     )
-
-    if only_negative:
-        comments = item.get("comentarios_negativos", [])
-        if comments:
-            examples = [
-                f"- «{entry.get('comentario', '')}»"
-                for entry in comments[:3]
-            ]
-            response += "\nComentarios negativos:\n" + "\n".join(examples)
+    if negative_only:
+        examples = item.get("comentarios_negativos", [])[:3]
+        if examples:
+            response += "\nComentarios negativos clasificados:\n" + "\n".join(
+                f"- «{entry.get('comentario', '')}»" for entry in examples
+            )
         else:
-            response += "\nNo se clasificaron comentarios como negativos."
+            response += "\nNo se clasificaron comentarios negativos."
     return response
 
 
@@ -306,162 +248,123 @@ def answer_most_negative(opinion_by_id: dict[str, dict]) -> str:
         return "No hay opiniones disponibles."
     maximum = ranked[0].get("sentimientos", {}).get("negativo", 0)
     leaders = [
-        f"{item.get('producto', item.get('product_id'))} ({maximum})"
+        item.get("producto", item.get("product_id"))
         for item in ranked
         if item.get("sentimientos", {}).get("negativo", 0) == maximum
     ]
     return (
-        "Categorías con más comentarios negativos clasificados: "
+        "Productos con más comentarios negativos clasificados: "
         + ", ".join(leaders)
-        + "."
+        + f" ({maximum} por categoría)."
     )
 
 
-def respond(query: str, shelves: list[dict],
-            opinion_by_id: dict[str, dict]) -> str:
-    normalized = normalize(query)
+def answer(query: str, intent: str, shelves: list[dict],
+           opinion_by_id: dict[str, dict]) -> str:
     product_id = find_product(query)
-    capture_id = find_capture(query)
-    threshold = find_threshold(query)
 
-    opinion_terms = (
-        "opinion", "opiniones", "opina", "opinan", "comentario", "comentarios",
-        "sentimiento", "sentimientos", "cliente", "clientes",
-        "resena", "resenas", "queja", "quejas", "reclamo", "reclamos",
-        "problema", "problemas", "dice", "dicen", "valoracion", "valoraciones",
-    )
-    negative_terms = (
-        "negativo", "negativa", "negativas", "negativos",
-        "queja", "quejas", "reclamo", "reclamos", "problema", "problemas",
-    )
-    inventory_terms = (
-        "inventario", "posicion", "posiciones", "anaquel", "anaqueles", "espacio",
-        "espacios", "stock", "existencia", "existencias", "disponible",
-        "disponibles", "surtido", "surtidos", "exhibe", "exhiben",
-        "exhibicion", "producto", "productos", "cuanto", "cuanta", "cuantos", "cuantas",
-        "presencia", "presentes", "predomina", "predominan", "prepondera",
-        "preponderan", "abunda", "abundan", "escasea", "escasos", "escasas",
-        "falta", "faltan", "ausente", "ausentes", "menos", "menor", "mas",
-        "mayor", "lleno", "llenos", "vacio", "vacios", "completo", "completos",
-    )
-
-    missing_terms = (
-        "falta", "faltan", "ausente", "ausentes", "no aparece", "no aparecen",
-        "no hay", "no se encuentra", "no se encuentran",
-    )
-    least_terms = (
-        "menos", "menor", "escasea", "escasos", "escasas",
-        "poca presencia", "menos presente", "menor presencia",
-        "menos posiciones", "menor cantidad", "menos cantidad", "menos espacio",
-    )
-    most_terms = (
-        "predomina", "predominan", "prepondera", "preponderan", "abunda", "abundan",
-        "mayor presencia", "mas presencia", "mas presente", "mas presentes",
-        "mas exhibido", "mas exhibidos", "mas frecuente", "mas frecuentes",
-        "mas se repite", "mas repetido", "mas posiciones", "mayor cantidad",
-        "mas cantidad", "mas espacio", "mas visible", "mas visibles",
-    )
-    time_terms = ("tiempo", "desde cuando", "desde hace", "hace cuanto", "dias", "semanas", "meses")
-    fullness_terms = ("lleno", "llenos", "vacio", "vacios", "ocupacion", "ocupado", "ocupados")
-
-    asks_opinions = any(term in normalized for term in opinion_terms)
-    asks_negative = any(term in normalized for term in negative_terms)
-    asks_inventory = any(term in normalized for term in inventory_terms)
-    asks_missing = any(term in normalized for term in missing_terms)
-    asks_least = any(term in normalized for term in least_terms)
-    asks_most = any(term in normalized for term in most_terms)
-    asks_time = any(term in normalized for term in time_terms)
-    asks_fullness = any(term in normalized for term in fullness_terms)
-
-    if asks_opinions and not product_id:
-        return answer_most_negative(opinion_by_id)
-
-    if asks_opinions and product_id:
-        return answer_product_opinions(opinion_by_id, product_id, asks_negative)
-
-    if asks_time and (asks_inventory or asks_missing):
-        return (
-            "No puedo determinar desde hace cuánto falta un producto. "
-            "Los datos actuales son cinco fotografías de anaqueles distintos y no incluyen "
-            "fechas históricas ni registros de reposición."
-        )
-
-    if asks_fullness and asks_inventory and not product_id and not asks_most and not asks_least:
-        return answer_shelf_occupancy(shelves, fullest=not any(
-            term in normalized for term in ("vacio", "vacios")
-        ))
-
-    if asks_missing and not product_id:
-        return answer_most_absent(shelves)
-
-    if asks_least and not product_id:
+    if intent == "MENOR_PRESENCIA":
         return answer_least_present(shelves)
-
-    if asks_most and not product_id:
+    if intent == "MAYOR_PRESENCIA":
         return answer_most_present(shelves)
-
-    if asks_inventory and product_id:
-        return answer_inventory_product(shelves, product_id, capture_id)
-
-    if asks_inventory or threshold is not None:
-        return answer_inventory_shelf(shelves, capture_id, threshold)
-
-    return (
-        "No identifiqué la consulta. Puedes preguntar, por ejemplo:\\n"
-        "- ¿Qué producto tiene menor presencia en los anaqueles?\\n"
-        "- ¿Qué productos predominan en la exhibición?\\n"
-        "- ¿Qué productos faltan en más anaqueles?\\n"
-        "- ¿Qué anaquel está más lleno?\\n"
-        "- ¿Qué dicen los clientes sobre el cereal?\\n"
-        "- ¿Qué quejas hay sobre la gaseosa?"
-    )
+    if intent == "PRODUCTOS_AUSENTES":
+        return answer_absences(shelves)
+    if intent == "OCUPACION_ANAQUELES":
+        return answer_occupancy(shelves, query)
+    if intent == "INVENTARIO_PRODUCTO":
+        if not product_id:
+            return "¿De qué producto necesitas consultar las posiciones visibles?"
+        return answer_product_inventory(shelves, product_id)
+    if intent == "OPINIONES_PRODUCTO":
+        if not product_id:
+            return "¿Sobre qué producto quieres conocer las opiniones de los clientes?"
+        return answer_product_opinions(opinion_by_id, product_id, negative_only=False)
+    if intent == "QUEJAS_PRODUCTO":
+        if not product_id:
+            return "¿De qué producto quieres revisar los comentarios negativos?"
+        return answer_product_opinions(opinion_by_id, product_id, negative_only=True)
+    if intent == "MAS_QUEJAS":
+        return answer_most_negative(opinion_by_id)
+    if intent == "CONSULTA_TEMPORAL":
+        return (
+            "No puedo determinar cuánto tiempo lleva faltando un producto. "
+            "El proyecto contiene fotografías de anaqueles distintos, pero no incluye "
+            "historial de fechas, disponibilidad ni reposiciones."
+        )
+    return "No reconocí la intención. Reformula la pregunta dentro del contexto de inventario u opiniones de clientes."
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Asistente conversacional local para Tienda inteligente."
+        description="Chatbot con clasificación de intenciones mediante aprendizaje automático."
     )
     parser.add_argument(
         "--inventario", type=Path,
         default=Path("cv-lab/salida_ml/iteraciones/evaluacion_01/inventario_por_foto.json"),
-        help="JSON de inventario estimado por el modelo de visión.",
     )
     parser.add_argument(
         "--opiniones", type=Path,
         default=Path("nlp-lab/salida/resumen_sentimientos.json"),
-        help="JSON de opiniones clasificado por el laboratorio de PLN.",
+    )
+    parser.add_argument(
+        "--intenciones", type=Path, default=INTENT_DATASET,
     )
     args = parser.parse_args()
 
     inventory_path = args.inventario if args.inventario.is_absolute() else REPO_ROOT / args.inventario
     opinions_path = args.opiniones if args.opiniones.is_absolute() else REPO_ROOT / args.opiniones
+    intent_path = args.intenciones if args.intenciones.is_absolute() else REPO_ROOT / args.intenciones
 
     try:
-        inventory = load_json(inventory_path, "inventario")
-        opinions = load_json(opinions_path, "resumen de sentimientos")
-        shelves, opinion_by_id = validate_sources(inventory, opinions)
-    except (FileNotFoundError, ValueError, OSError) as exc:
+        shelves, opinion_by_id = load_sources(inventory_path, opinions_path)
+        classifier, example_count, intent_count = train_intent_classifier(intent_path)
+    except (FileNotFoundError, ValueError, OSError, csv.Error) as exc:
         parser.exit(1, f"ERROR: {exc}\n")
 
-    print("TIENDA INTELIGENTE – Asistente conversacional")
-    print("Consulto inventario visual y opiniones clasificadas.")
-    print("Escribe 'ayuda' para ver ejemplos o 'salir' para terminar.\n")
+    print("TIENDA INTELIGENTE – Chatbot de consulta")
+    print(f"Clasificador de intenciones entrenado con {example_count} preguntas y {intent_count} intenciones.")
+    print("Fuentes: inventario visual y opiniones analizadas.")
+    print("Escribe 'ayuda' para ejemplos o 'salir' para terminar.\n")
 
-    try:
-        while True:
+    while True:
+        try:
             query = input("Tú: ").strip()
-            if normalize(query) in {"salir", "exit", "quit"}:
-                print("Asistente: Hasta luego.")
-                break
-            if normalize(query) in {"ayuda", "help"}:
-                print(respond("", shelves, opinion_by_id))
-                continue
-            if not query:
-                continue
-            print("Asistente:", respond(query, shelves, opinion_by_id), "\n")
-    except (EOFError, KeyboardInterrupt):
-        print("\nAsistente: Sesión finalizada.")
-    return 0
+        except (EOFError, KeyboardInterrupt):
+            print("\nAsistente: Sesión finalizada.")
+            break
+        normalized = normalize(query)
+        if normalized in {"salir", "exit", "quit"}:
+            print("Asistente: Hasta luego.")
+            break
+        if normalized in {"ayuda", "help"}:
+            print(
+                "Puedes preguntar:\n"
+                "- ¿Qué producto tiene menor presencia en los anaqueles?\n"
+                "- ¿Qué productos predominan en la exhibición?\n"
+                "- ¿Qué productos faltan en más anaqueles?\n"
+                "- ¿Qué anaquel está más lleno?\n"
+                "- ¿Cuánto espacio ocupa la leche?\n"
+                "- ¿Qué dicen los clientes sobre el cereal?\n"
+                "- ¿Qué quejas hay sobre la gaseosa?\n"
+                "- ¿Qué producto recibe más comentarios negativos?\n"
+                "- ¿Desde hace cuánto falta el detergente?\n"
+            )
+            continue
+        if not query:
+            continue
+
+        probabilities = classifier.predict_proba([query])[0]
+        class_names = classifier.classes_
+        best_index = int(probabilities.argmax())
+        intent = str(class_names[best_index])
+        score = float(probabilities[best_index])
+        if score < MIN_INTENT_SCORE:
+            print("Asistente: No reconocí la intención. Prueba con una consulta sobre inventario u opiniones.\n")
+            continue
+
+        response = answer(query, intent, shelves, opinion_by_id)
+        print(f"Asistente: {response}")
+        print(f"  [Intención detectada: {intent} | puntuación del clasificador: {score:.2f}]\n")
 
 
 if __name__ == "__main__":
