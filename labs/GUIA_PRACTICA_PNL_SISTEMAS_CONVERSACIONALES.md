@@ -73,7 +73,16 @@ En el Explorador de VS Code, abre **nlp-lab → salida**. Examina:
 - **evaluacion_sentimientos.json:** accuracy, F1 macro y matriz de confusión.
 - **resumen_sentimientos.json:** sentimientos y comentarios agrupados por producto. Este archivo alimenta el chatbot.
 
-**Actividad:** identifica dos comentarios en los que la predicción no coincida con la referencia. Analiza si el desacuerdo puede deberse al contexto, a una expresión comercial o a la diferencia entre el lenguaje de redes sociales y las opiniones sobre productos.
+**Actividad: revisar predicciones incorrectas**
+
+Trabaja con el archivo **`nlp-lab → salida → comentarios_analizados.csv`**, generado en el paso anterior. No uses `evaluacion_sentimientos.json` para esta actividad: ese archivo contiene métricas agregadas, no el detalle de cada comentario.
+
+1. Abre `comentarios_analizados.csv` desde el Explorador de VS Code.
+2. Busca el valor `False` (puedes usar Ctrl + F). Cada fila encontrada representa un comentario donde la predicción no coincide con la referencia.
+3. En esa misma fila, lee las columnas `comentario`, `sentimiento_referencia` y `sentimiento_predicho`.
+4. Selecciona dos casos y explica por qué crees que el modelo pudo clasificarlos de otra manera. Considera el contexto, expresiones propias de opiniones comerciales y las diferencias entre el lenguaje de redes sociales y las opiniones sobre productos.
+
+Si no encuentras ninguna fila con `False`, significa que el modelo no tuvo desacuerdos con este conjunto de comentarios. En ese caso, revisa dos comentarios y explica qué elementos del texto pudieron influir en la predicción.
 
 PySentimiento utiliza un modelo preentrenado para español, entrenado principalmente con publicaciones de redes sociales. Su resultado en comentarios comerciales puede variar. Además, las opiniones de esta práctica son simuladas; las métricas no representan el rendimiento en clientes reales.
 
