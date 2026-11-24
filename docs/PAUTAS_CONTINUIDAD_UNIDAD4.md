@@ -38,7 +38,9 @@ Tendrá una segunda guía independiente: `labs/GUIA_PRACTICA_PNL_SISTEMAS_CONVER
 
 El Eje 3 incluye normalización, tokenización, análisis léxico de sentimientos, manejo básico de negaciones, evaluación contra etiquetas de referencia y generación de `nlp-lab/salida/resumen_sentimientos.json`.
 
-El Eje 4 incluye un chatbot local basado en reglas que identifica intenciones y categorías mediante palabras clave y expresiones regulares, y consulta `inventario_por_foto.json` y `resumen_sentimientos.json`. Acepta preguntas escritas en lenguaje natural dentro del dominio acotado de la tienda, pero no es un modelo generativo ni comprende consultas arbitrarias. La guía debe enseñar qué términos incluir para consultar inventario, anaqueles, opiniones y comentarios negativos.
+El Eje 4 incluye un chatbot local basado en reglas que identifica intenciones mediante palabras clave y expresiones regulares, y consulta `inventario_por_foto.json` y `resumen_sentimientos.json`. Las consultas de inventario se orientan a necesidades de negocio: menor presencia de productos, categorías predominantes, productos no detectados en las fotografías y ocupación de anaqueles. No se exige al usuario recordar el código de una captura para realizar consultas agregadas.
+
+Los cinco JPG representan cinco anaqueles distintos, no un registro temporal del mismo anaquel. Por ello, pueden compararse posiciones visibles acumuladas y presencia/ausencia por fotografía, pero no inferir cuánto tiempo lleva faltando un producto ni el stock del almacén. El chatbot acepta lenguaje natural acotado al dominio, pero no es un modelo generativo ni comprende consultas arbitrarias.
 
 El desarrollo utiliza la biblioteca estándar de Python, sin APIs pagadas ni backend. Mantener esta práctica en su segunda guía; no incorporarla en la guía de Sesión 1.
 
