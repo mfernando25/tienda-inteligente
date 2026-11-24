@@ -92,7 +92,8 @@ def find_product(query: str) -> str | None:
 
 
 def find_capture(query: str) -> str | None:
-    match = re.search(r"captura[_ -]?(\d+)", normalize(query))
+    # Acepta referencias como "captura_031" y "anaquel 031".
+    match = re.search(r"(?:captura|anaquel)[_ -]?(\d+)", normalize(query))
     if not match:
         return None
     return f"captura_{match.group(1).zfill(3)}"
@@ -216,12 +217,18 @@ def respond(query: str, shelves: list[dict],
     opinion_terms = (
         "opinion", "opiniones", "opina", "opinan", "comentario", "comentarios",
         "sentimiento", "sentimientos", "cliente", "clientes",
-        "resena", "resenas", "queja", "quejas",
+        "resena", "resenas", "queja", "quejas", "reclamo", "reclamos",
+        "problema", "problemas", "dice", "dicen", "valoracion", "valoraciones",
     )
-    negative_terms = ("negativo", "negativa", "negativas", "negativos", "queja", "quejas")
+    negative_terms = (
+        "negativo", "negativa", "negativas", "negativos",
+        "queja", "quejas", "reclamo", "reclamos", "problema", "problemas",
+    )
     inventory_terms = (
         "inventario", "posicion", "posiciones", "anaquel", "espacio",
-        "espacios", "cuanto", "cuanta", "cuantos", "cuantas",
+        "espacios", "stock", "existencia", "existencias", "disponible",
+        "disponibles", "surtido", "surtidos", "exhibe", "exhiben",
+        "cuanto", "cuanta", "cuantos", "cuantas",
     )
 
     asks_opinions = any(term in normalized for term in opinion_terms)
@@ -242,11 +249,11 @@ def respond(query: str, shelves: list[dict],
 
     return (
         "No identifiqué la consulta. Prueba con preguntas como:\n"
-        "- ¿Cuántas posiciones de leche hay en captura_031?\n"
-        "- ¿Qué productos tienen menos de 3 posiciones en captura_031?\n"
-        "- ¿Qué opinan los clientes sobre el cereal?\n"
-        "- ¿Qué comentarios negativos hay sobre la gaseosa?\n"
-        "- ¿Qué categoría tiene más opiniones negativas?"
+        "- ¿Cómo está el inventario del anaquel 031?\n"
+        "- ¿Cuánto cereal se exhibe en el anaquel 031?\n"
+        "- ¿Qué dicen los clientes sobre el cereal?\n"
+        "- ¿Hay comentarios negativos sobre la gaseosa?\n"
+        "- ¿Qué problemas reportan los clientes sobre el detergente?"
     )
 
 
