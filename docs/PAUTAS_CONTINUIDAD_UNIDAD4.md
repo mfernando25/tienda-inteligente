@@ -32,13 +32,15 @@ La guía de Sesión 1 termina con la interpretación del informe de evaluación.
 ### Sesión 2 – La tienda entiende y conversa
 **Ejes 3 y 4: Procesamiento de lenguaje natural y Sistemas conversacionales.**
 
-Tendrá una guía independiente. Reutilizará:
-- El inventario visual producido en la Sesión 1.
-- Un conjunto de comentarios de clientes sobre las categorías de productos.
+Tendrá una segunda guía independiente: `labs/GUIA_PRACTICA_PNL_SISTEMAS_CONVERSACIONALES.md`. Reutilizará:
+- El inventario visual producido en la Sesión 1: `cv-lab/salida_ml/iteraciones/evaluacion_01/inventario_por_foto.json`.
+- El dataset `nlp-lab/dataset/comentarios_clientes.csv`, con 72 comentarios simulados en español, ocho categorías y distribución equilibrada: 24 positivos, 24 negativos y 24 neutrales.
 
-El trabajo de PLN abarcará limpieza, tokenización y análisis de sentimientos. El sistema conversacional identificará intenciones y entidades y consultará las fuentes estructuradas de inventario y opiniones.
+El Eje 3 incluye normalización, tokenización, análisis léxico de sentimientos, manejo básico de negaciones, evaluación contra etiquetas de referencia y generación de `nlp-lab/salida/resumen_sentimientos.json`.
 
-No incorporar esta práctica dentro de la guía de Sesión 1.
+El Eje 4 incluye un asistente local basado en reglas que identifica intenciones y categorías y consulta `inventario_por_foto.json` y `resumen_sentimientos.json`.
+
+El desarrollo utiliza la biblioteca estándar de Python, sin APIs pagadas ni backend. Mantener esta práctica en su segunda guía; no incorporarla en la guía de Sesión 1.
 
 ## 3. Iteraciones de evaluación visual
 
