@@ -178,6 +178,7 @@ cv-lab/salida_ml/iteraciones/evaluacion_01/
 ├── matriz_confusion.csv
 ├── errores.csv
 ├── evaluacion.json
+├── inventario_por_foto.json
 └── informe_evaluacion.html
 ~~~
 
@@ -195,7 +196,7 @@ El informe presenta:
 - **Galería de errores:** recortes cuya clase real no coincide con la predicción.
 - **Anaqueles anotados:** vista de las cinco fotografías con las clases predichas.
 
-Los CSV y el JSON son archivos de datos complementarios; no es necesario abrirlos para realizar el análisis principal.
+Los CSV y `evaluacion.json` son archivos complementarios; no es necesario abrirlos para realizar el análisis principal. `inventario_por_foto.json` conserva el inventario estimado a partir de las predicciones y se reutilizará en la práctica de sistemas conversacionales.
 
 ### 4. Interpretar los resultados
 
