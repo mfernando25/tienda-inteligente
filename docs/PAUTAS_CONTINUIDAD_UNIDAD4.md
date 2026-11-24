@@ -44,7 +44,7 @@ Tendrá una segunda guía independiente: `labs/GUIA_PRACTICA_PNL_SISTEMAS_CONVER
 - Interpretación de desacuerdos y limitaciones del dominio del modelo: el modelo de referencia se entrenó principalmente con publicaciones de redes sociales, mientras que la práctica utiliza comentarios comerciales sintéticos.
 
 **Eje 4 – Sistemas conversacionales**
-- Clasificación supervisada de intenciones mediante `TfidfVectorizer` + `LogisticRegression` de scikit-learn. El texto se procesa con stemming Snowball para español, de modo que formas como producto/productos y predomina/predominan compartan raíz.
+- Clasificación supervisada de intenciones mediante TF-IDF de palabras y caracteres + `LogisticRegression` de scikit-learn. La rama de palabras usa stemming Snowball para español, de modo que formas como producto/productos y predomina/predominan compartan raíz; la rama de caracteres ayuda a reconocer variantes morfológicas y de escritura.
 - Dataset de preguntas etiquetadas: `conversational-lab/dataset/intenciones.csv`, con 144 ejemplos iniciales distribuidos en nueve intenciones (16 por intención). Los estudiantes podrán añadir variantes de preguntas y volver a entrenar el clasificador. Si la puntuación es baja o las dos intenciones más probables son demasiado cercanas, el chatbot solicita reformular en lugar de emitir una respuesta potencialmente incorrecta.
 - Validación del clasificador con una partición estratificada del 25% para calcular accuracy y F1 macro; después el asistente se entrena con todos los ejemplos. Las métricas son orientativas por el tamaño reducido del dataset.
 - Extracción de entidades de producto mediante alias y consulta de `inventario_por_foto.json` y `resumen_sentimientos.json`.
