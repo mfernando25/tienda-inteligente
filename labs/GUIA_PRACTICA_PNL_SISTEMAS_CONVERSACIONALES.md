@@ -113,34 +113,46 @@ No es un modelo generativo como ChatGPT: no comprende cualquier pregunta, no man
 
 ### Cómo formular las preguntas
 
-No es necesario copiar exactamente los ejemplos, pero la consulta debe expresar una de las tareas que el asistente reconoce:
+Las consultas deben expresar una necesidad del negocio. **No es necesario recordar el código de una fotografía ni indicar un anaquel específico.** Por defecto, las preguntas de inventario se responden considerando el conjunto de cinco anaqueles fotografiados.
 
-- **Inventario:** pregunta por el inventario, stock, disponibilidad, posiciones o productos exhibidos. Menciona la categoría si buscas un producto concreto.
-- **Anaquel:** puedes identificarlo como `anaquel 031` o `captura_031`. Si no indicas uno, el asistente puede mostrar los resultados de todos los anaqueles.
-- **Opiniones:** pregunta qué dicen, qué opinan o qué comentarios tienen los clientes. Incluye el nombre del producto.
-- **Problemas o quejas:** menciona términos como «comentarios negativos», «quejas», «reclamos» o «problemas» para solicitar los ejemplos negativos clasificados.
+- **Presencia de productos:** pregunta qué producto aparece menos, cuál predomina o qué categorías tienen mayor presencia.
+- **Ausencia en anaqueles:** pregunta qué productos no aparecen o en cuántos anaqueles no se detecta una categoría.
+- **Ocupación:** pregunta qué anaqueles están más llenos o más vacíos.
+- **Producto específico:** pregunta cuánto espacio o cuántas posiciones visibles ocupa una categoría; el asistente suma sus posiciones en las cinco fotografías.
+- **Opiniones y quejas:** pregunta qué dicen los clientes, qué opinan de un producto o qué comentarios negativos se clasificaron.
 
-Formula una consulta por vez. Puedes escribirla con tus propias palabras, pero debe contener las pistas necesarias para que el asistente identifique qué dato necesitas.
+Formula una consulta por vez. Puedes usar tus propias palabras, pero incluye términos que indiquen qué información buscas. El código de fotografía solo se utiliza cuando se desea consultar una imagen concreta, no es necesario para las preguntas generales.
 
 ### Consultas de ejemplo
 
-**Inventario visual:**
+**Inventario y exhibición:**
 
 ~~~text
-¿Cómo está el inventario del anaquel 031?
-¿Cuánto cereal se exhibe en el anaquel 031?
-¿Hay leche disponible en el anaquel 031?
+¿Qué producto tiene menor presencia en los anaqueles?
+¿Qué productos predominan en la exhibición?
+¿Qué productos no aparecen en la mayoría de los anaqueles?
+¿Qué anaqueles están más llenos?
+¿Cuánto espacio ocupa la leche en los anaqueles?
 ~~~
 
 **Opiniones de clientes:**
 
 ~~~text
 ¿Qué dicen los clientes sobre el cereal?
-¿Hay comentarios negativos sobre la gaseosa?
-¿Qué problemas reportan los clientes sobre el detergente?
+¿Qué producto recibe más comentarios negativos?
+¿Qué quejas hay sobre la gaseosa?
 ~~~
 
-El asistente responde con los datos disponibles en los JSON. El inventario representa posiciones visibles (*facings*), no unidades almacenadas en bodega. Los sentimientos son resultados del analizador léxico, no opiniones reales verificadas.
+**Consultas que requieren datos adicionales:**
+
+~~~text
+¿Qué productos llevan más tiempo agotados?
+¿Desde hace cuánto falta la leche?
+~~~
+
+El asistente no puede responder las dos últimas preguntas: el proyecto contiene cinco fotografías de anaqueles distintos, pero no registra fechas de captura comparables, historial de disponibilidad ni reposiciones. Para conocer cuánto tiempo lleva faltando un producto se necesitarían datos históricos.
+
+El inventario representa posiciones visibles (*facings*) en las fotografías, no unidades almacenadas en bodega. La comparación global suma las posiciones detectadas en las cinco fotografías; sirve para comparar la composición de esa muestra, no para afirmar el stock total de una tienda. Los sentimientos son resultados del analizador léxico, no opiniones reales verificadas.
 
 Escribir `ayuda` para ver ejemplos o `salir` para terminar. Si la consulta no coincide con las reglas implementadas, el asistente indicará que no pudo identificarla y mostrará ejemplos.
 
@@ -162,6 +174,6 @@ En el Explorador de VS Code, ubica la carpeta **nlp-lab → salida**. Allí se e
 - **evaluacion_sentimientos.json**
 - **resumen_sentimientos.json**
 
-Además, realiza al menos tres consultas al asistente: una sobre inventario, una sobre opiniones y una sobre comentarios negativos. Registra las preguntas realizadas y las respuestas obtenidas. Redacta una conclusión breve sobre las limitaciones del análisis léxico y del sistema conversacional.
+Además, realiza al menos cuatro consultas al asistente: una para identificar el producto con menor presencia, otra sobre los productos predominantes, una sobre opiniones y otra sobre comentarios negativos. Registra las preguntas realizadas y las respuestas obtenidas. Intenta también una pregunta que requiera información histórica y explica por qué el asistente no puede responderla. Redacta una conclusión breve sobre las limitaciones del análisis léxico y del sistema conversacional.
 
 Los datos y resultados generados localmente no se suben al repositorio. El código y el dataset base de la práctica sí se versionan.
