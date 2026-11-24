@@ -188,6 +188,14 @@ Abrir el informe en el navegador:
 explorer.exe salida_ml/iteraciones/evaluacion_01/informe_evaluacion.html
 ~~~
 
+Si necesitas repetir la evaluación usando las mismas carpetas y reemplazar sus resultados:
+
+~~~bash
+python predecir_anaqueles.py --sobrescribir
+~~~
+
+Este parámetro elimina únicamente la carpeta de resultados `salida_ml/iteraciones/evaluacion_01/` y la vuelve a generar. No elimina las fotografías, los JSON de referencia ni el modelo entrenado.
+
 El informe presenta:
 
 - **Accuracy:** proporción de posiciones clasificadas correctamente.
