@@ -11,7 +11,7 @@ from pathlib import Path
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 from nltk.stem.snowball import SnowballStemmer
@@ -95,16 +95,29 @@ def train_intent_classifier(dataset_path: Path):
     )
 
     def create_pipeline():
+        word_features = TfidfVectorizer(
+            tokenizer=stem_spanish_tokens,
+            token_pattern=None,
+            lowercase=False,
+            ngram_range=(1, 2),
+            sublinear_tf=True,
+            max_features=5000,
+        )
+        character_features = TfidfVectorizer(
+            analyzer="char_wb",
+            lowercase=True,
+            strip_accents="unicode",
+            ngram_range=(3, 5),
+            sublinear_tf=True,
+            max_features=10000,
+        )
+        combined_features = FeatureUnion([
+            ("palabras", word_features),
+            ("caracteres", character_features),
+        ])
         return make_pipeline(
-            TfidfVectorizer(
-                tokenizer=stem_spanish_tokens,
-                token_pattern=None,
-                lowercase=False,
-                ngram_range=(1, 2),
-                sublinear_tf=True,
-                max_features=5000,
-            ),
-            LogisticRegression(max_iter=1500, class_weight="balanced", random_state=42),
+            combined_features,
+            LogisticRegression(max_iter=2500, class_weight="balanced", random_state=42),
         )
 
     evaluation_model = create_pipeline()
