@@ -4,7 +4,7 @@
 
 - [Cierre de la sesión 1: inferencia del anaquel completo](GUIA_PRACTICA_INTEGRACION_ML_VISION_ANAQUEL.md)
 
-La guía parte del modelo HOG + SVM que los grupos ya entrenaron. La actividad pendiente procesa 15 fotografías nuevas de anaqueles completos y guarda las predicciones por iteración y categoría.
+La guía prepara el modelo HOG + SVM y lo evalúa con cinco fotografías nuevas junto con sus JSON de referencia. El programa genera un informe HTML con métricas, matriz de confusión y errores.
 
 La sesión 2 tendrá una guía independiente para PLN y Sistemas conversacionales.
 
