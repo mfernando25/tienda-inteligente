@@ -13,6 +13,8 @@ from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import train_test_split
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INTENT_DATASET = Path(__file__).resolve().parents[1] / "dataset" / "intenciones.csv"
@@ -77,20 +79,33 @@ def train_intent_classifier(dataset_path: Path):
     if len(set(labels)) < 3:
         raise ValueError("El dataset debe contener al menos tres intenciones distintas.")
 
-    # TF-IDF convierte las preguntas en características numéricas; la regresión
-    # logística aprende a asociarlas con las intenciones etiquetadas.
-    classifier = make_pipeline(
-        TfidfVectorizer(
-            lowercase=True,
-            strip_accents="unicode",
-            ngram_range=(1, 2),
-            sublinear_tf=True,
-            max_features=5000,
-        ),
-        LogisticRegression(max_iter=1500, class_weight="balanced", random_state=42),
+    # Reserva una parte para medir la generalización; después vuelve a entrenar
+    # el clasificador con todos los ejemplos disponibles para usarlo en el chatbot.
+    train_questions, test_questions, train_labels, test_labels = train_test_split(
+        questions, labels, test_size=0.25, random_state=42, stratify=labels,
     )
+
+    def create_pipeline():
+        return make_pipeline(
+            TfidfVectorizer(
+                lowercase=True,
+                strip_accents="unicode",
+                ngram_range=(1, 2),
+                sublinear_tf=True,
+                max_features=5000,
+            ),
+            LogisticRegression(max_iter=1500, class_weight="balanced", random_state=42),
+        )
+
+    evaluation_model = create_pipeline()
+    evaluation_model.fit(train_questions, train_labels)
+    test_predictions = evaluation_model.predict(test_questions)
+    validation_accuracy = float(accuracy_score(test_labels, test_predictions))
+    validation_f1 = float(f1_score(test_labels, test_predictions, average="macro", zero_division=0))
+
+    classifier = create_pipeline()
     classifier.fit(questions, labels)
-    return classifier, len(rows), len(set(labels))
+    return classifier, len(rows), len(set(labels)), validation_accuracy, validation_f1
 
 
 def find_product(query: str) -> str | None:
@@ -317,12 +332,14 @@ def main() -> int:
 
     try:
         shelves, opinion_by_id = load_sources(inventory_path, opinions_path)
-        classifier, example_count, intent_count = train_intent_classifier(intent_path)
+        classifier, example_count, intent_count, intent_accuracy, intent_f1 = train_intent_classifier(intent_path)
     except (FileNotFoundError, ValueError, OSError, csv.Error) as exc:
         parser.exit(1, f"ERROR: {exc}\n")
 
     print("TIENDA INTELIGENTE – Chatbot de consulta")
-    print(f"Clasificador de intenciones entrenado con {example_count} preguntas y {intent_count} intenciones.")
+    print(f"Clasificador entrenado con {example_count} preguntas y {intent_count} intenciones.")
+    print(f"Validación (25% reservado): accuracy {intent_accuracy * 100:.1f}% | F1 macro {intent_f1 * 100:.1f}%.")
+    print("El modelo usado en la conversación se vuelve a entrenar con todos los ejemplos.")
     print("Fuentes: inventario visual y opiniones analizadas.")
     print("Escribe 'ayuda' para ejemplos o 'salir' para terminar.\n")
 
