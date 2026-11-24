@@ -13,13 +13,13 @@ Este laboratorio conecta los resultados de visión artificial y PLN mediante un 
 ## Cómo funciona
 
 1. `TfidfVectorizer` transforma las preguntas de entrenamiento en características numéricas.
-2. `LogisticRegression` aprende a asociar esas características con una intención.
+2. El stemming Snowball para español reduce variantes morfológicas (por ejemplo, producto/productos y predomina/predominan). `LogisticRegression` aprende a asociar esas características con una intención.
 3. El programa reserva el 25% de las preguntas para una validación inicial, muestra accuracy y F1 macro y luego ajusta el chatbot final con todos los ejemplos.
 4. El chatbot clasifica la pregunta nueva y muestra la intención detectada y el puntaje del clasificador.
 5. Identifica el producto mencionado mediante un diccionario de entidades y alias.
 6. Consulta los JSON del proyecto y construye la respuesta con los datos disponibles.
 
-La validación usa un conjunto pequeño de ejemplos, por lo que sus métricas son orientativas. El clasificador se entrena cada vez que se inicia el asistente. Para ampliar las formas de preguntar, se agregan nuevas frases etiquetadas en `dataset/intenciones.csv` y se reinicia el programa.
+El dataset inicial contiene 144 preguntas: 16 por cada una de las nueve intenciones. El clasificador usa stemming para español y solicita reformular cuando la predicción es ambigua. La validación usa un conjunto pequeño de ejemplos, por lo que sus métricas son orientativas. El clasificador se entrena cada vez que se inicia el asistente. Para ampliar las formas de preguntar, se agregan nuevas frases etiquetadas en `dataset/intenciones.csv` y se reinicia el programa.
 
 ## Ejecutar
 
