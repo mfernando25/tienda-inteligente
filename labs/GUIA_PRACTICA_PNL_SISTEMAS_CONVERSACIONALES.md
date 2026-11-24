@@ -129,7 +129,7 @@ Formula una consulta por vez. Puedes usar tus propias palabras, pero incluye té
 
 ~~~text
 ¿Qué producto tiene menor presencia en los anaqueles?
-¿Qué productos predominan en la exhibición cuando los anaqueles están llenos?
+¿Qué productos predominan en la exhibición?
 ¿Qué productos faltan en más anaqueles?
 ¿Qué anaqueles están más llenos?
 ¿Cuánto espacio ocupa la leche en los anaqueles?
