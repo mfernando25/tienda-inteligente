@@ -115,13 +115,23 @@ def format_inventory(shelf: dict, product_id: str) -> str:
 
 def answer_inventory_product(shelves: list[dict], product_id: str,
                              capture_id: str | None) -> str:
-    selected = [
-        shelf for shelf in shelves
-        if capture_id is None or shelf.get("capture_id") == capture_id
-    ]
+    if capture_id is None:
+        total = sum(
+            int(shelf.get("predicted_counts", {}).get(product_id, 0) or 0)
+            for shelf in shelves
+        )
+        present = sum(
+            1 for shelf in shelves
+            if int(shelf.get("predicted_counts", {}).get(product_id, 0) or 0) > 0
+        )
+        return (
+            f"{PRODUCTS[product_id]['name']}: {total} posiciones visibles en total, "
+            f"presente en {present} de {len(shelves)} anaqueles fotografiados."
+        )
+
+    selected = [shelf for shelf in shelves if shelf.get("capture_id") == capture_id]
     if not selected:
-        available = ", ".join(shelf.get("capture_id", "?") for shelf in shelves)
-        return f"No encuentro {capture_id}. Anaqueles disponibles: {available}."
+        return f"No encuentro el anaquel solicitado: {capture_id}."
     return "\n".join(format_inventory(shelf, product_id) for shelf in selected)
 
 
