@@ -26,10 +26,11 @@ Crea un entorno independiente para no modificar el entorno utilizado en visión 
 python -m venv .venv-sesion2
 source .venv-sesion2/Scripts/activate
 python -m pip install --upgrade pip
+python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r nlp-lab/requirements.txt
 ~~~
 
-La primera inicialización descarga el modelo de sentimientos en español. Realízala antes de la sesión:
+PyTorch se instala en su versión CPU para no requerir una GPU NVIDIA. La primera inicialización descarga el modelo de sentimientos en español; necesita conexión a Internet y debe realizarse antes de la sesión:
 
 ~~~bash
 python -c "from pysentimiento import create_analyzer; create_analyzer(task='sentiment', lang='es')"
@@ -57,7 +58,7 @@ python nlp-lab/src/analizar_sentimientos.py
 
 El programa combina dos operaciones diferentes:
 
-1. **Exploración del texto con NLTK:** normaliza el comentario y muestra su división en tokens para observar cómo se representa el lenguaje.
+1. **Normalización y tokenización:** transforma el texto a minúsculas, elimina tildes y utiliza NLTK para dividirlo en tokens. Esta salida es para explorar la estructura del comentario.
 2. **Clasificación con PySentimiento:** envía el comentario original a un modelo Transformer preentrenado en español. El modelo devuelve una predicción positiva, negativa o neutral y las probabilidades asociadas.
 3. **Evaluación:** compara las predicciones con `sentimiento_referencia` y calcula accuracy, F1 macro y matriz de confusión.
 4. **Agrupación:** resume los resultados por producto para que el chatbot pueda consultarlos.
