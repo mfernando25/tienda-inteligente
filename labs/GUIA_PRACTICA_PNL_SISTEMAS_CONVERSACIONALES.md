@@ -105,9 +105,9 @@ Al iniciar, el chatbot separa el 25% de las preguntas etiquetadas para una valid
 
 El sistema aplica aprendizaje automático supervisado:
 
-1. **TF-IDF** transforma las preguntas de entrenamiento en características numéricas.
+1. **Stemming en español** reduce variantes de una misma palabra (por ejemplo, «producto/productos» y «predomina/predominan»). **TF-IDF** transforma las preguntas en características numéricas.
 2. **Regresión Logística** aprende a asociar esas características con una intención, por ejemplo, consultar inventario, identificar productos con menor presencia o preguntar por opiniones.
-3. El chatbot clasifica la nueva pregunta y muestra la intención detectada y el puntaje del clasificador.
+3. El chatbot clasifica la nueva pregunta y muestra la intención detectada y el puntaje del clasificador. Si la puntuación es baja o las dos intenciones más probables son demasiado cercanas, solicita reformular la pregunta en lugar de ejecutar una intención dudosa.
 4. Reconoce el producto mencionado mediante un conjunto de entidades y alias.
 5. Consulta los JSON y construye una respuesta con los datos disponibles.
 
