@@ -6,7 +6,7 @@ Este laboratorio integra los resultados de visión por computadora y PLN mediant
 
 | Fuente | Contenido |
 |---|---|
-| `cv-lab/salida_ml/iteraciones/evaluacion_01/inventario_por_foto.json` | Conteos estimados por categoría y por anaquel, generados únicamente a partir de las predicciones visuales. |
+| `cv-lab/salida_ml/iteraciones/evaluacion_01/inventario_por_foto.json` | Conteos estimados de productos por anaquel, derivados de las predicciones visuales. |
 | `nlp-lab/salida/resumen_sentimientos.json` | Comentarios y conteos de sentimientos agrupados por categoría. |
 
 ## Ejecutar
@@ -17,42 +17,38 @@ Desde la raíz del repositorio:
 python conversational-lab/src/asistente_tienda.py
 ~~~
 
-El asistente permite consultar posiciones visibles de productos, inventario por anaquel, resumen de sentimientos y comentarios clasificados como negativos.
+## Consultas orientadas al negocio
 
-## Ejemplos de consultas
+El asistente analiza por defecto el conjunto de cinco fotografías. No hace falta indicar el código de una captura.
 
-**Inventario:**
+**Presencia y exhibición:**
 
 ~~~text
-¿Cómo está el inventario del anaquel 031?
-¿Cuánto cereal se exhibe en el anaquel 031?
-¿Hay leche disponible en el anaquel 031?
+¿Qué producto tiene menor presencia en los anaqueles?
+¿Qué productos predominan en la exhibición?
+¿Qué productos no aparecen en la mayoría de los anaqueles?
+¿Qué anaqueles están más llenos?
+¿Cuánto espacio ocupa la leche en los anaqueles?
 ~~~
 
-**Opiniones:**
+**Opiniones de clientes:**
 
 ~~~text
 ¿Qué dicen los clientes sobre el cereal?
-¿Hay comentarios negativos sobre la gaseosa?
-¿Qué problemas reportan los clientes sobre el detergente?
+¿Qué producto recibe más comentarios negativos?
+¿Qué quejas hay sobre la gaseosa?
 ~~~
 
-## Cómo formular consultas
-
-Se puede escribir en español sin copiar literalmente los ejemplos, pero las preguntas deben incluir términos que permitan reconocer la intención:
-
-- Para inventario: términos como inventario, stock, existencias, disponibilidad, posiciones o exhibición.
-- Para un anaquel: indicar su número, por ejemplo `anaquel 031` o `captura_031`.
-- Para opiniones: mencionar clientes, opiniones, comentarios, reseñas o qué dicen/opinan.
-- Para comentarios negativos: mencionar negativos, quejas, reclamos o problemas.
-- Para consultar un producto: incluir su nombre o categoría.
-
-El asistente trabaja con estas intenciones y categorías concretas. Si la frase no contiene las pistas reconocidas, no podrá identificar la consulta.
+Se aceptan preguntas redactadas con palabras propias, siempre que incluyan términos relacionados con la intención. El código de captura solo se necesita para consultar una fotografía específica.
 
 ## Qué tipo de sistema es
 
-Es un chatbot conversacional sencillo basado en reglas: identifica palabras clave y patrones, consulta los JSON y arma una respuesta. Acepta preguntas en lenguaje natural acotado al dominio de la tienda, pero **no entiende cualquier pregunta ni es un modelo generativo como ChatGPT**. No aprende de la conversación ni razona sobre información que no esté en sus fuentes.
+Es un chatbot conversacional local basado en reglas. Identifica palabras clave y patrones, consulta los JSON y construye una respuesta. Acepta lenguaje natural dentro del dominio acotado de la tienda, pero no es un modelo generativo ni comprende consultas arbitrarias.
 
-## Limitaciones
+## Límites de los datos
 
-La identificación de intenciones y entidades utiliza palabras clave y expresiones regulares; no es comprensión de lenguaje natural abierta. Los conteos representan posiciones visibles (*facings*), no stock de almacén. Los sentimientos son predicciones de un analizador léxico, no etiquetas verificadas de opiniones reales.
+- Las cinco fotografías representan cinco anaqueles distintos, no mediciones de un mismo anaquel a lo largo del tiempo.
+- Los totales agregados comparan posiciones visibles (*facings*) en esas cinco fotografías. No representan unidades en almacén ni el stock total de una tienda.
+- La ausencia de un producto en una fotografía no demuestra que esté agotado en almacén.
+- No se puede determinar cuánto tiempo lleva faltando un producto: no hay fechas históricas comparables ni registros de reposición.
+- Los sentimientos son predicciones de un analizador léxico sobre comentarios simulados, no opiniones reales verificadas.
