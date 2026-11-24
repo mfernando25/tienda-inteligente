@@ -14,10 +14,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
+from nltk.stem.snowball import SnowballStemmer
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INTENT_DATASET = Path(__file__).resolve().parents[1] / "dataset" / "intenciones.csv"
-MIN_INTENT_SCORE = 0.16
+MIN_INTENT_SCORE = 0.20
+MIN_INTENT_MARGIN = 0.05
+SPANISH_STEMMER = SnowballStemmer("spanish")
+TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
 PRODUCTS = {
     "canned": {"name": "Conservas", "aliases": ("conserva", "conservas", "lata", "latas")},
@@ -34,6 +38,12 @@ PRODUCTS = {
 def normalize(text: str) -> str:
     decomposed = unicodedata.normalize("NFD", text.lower())
     return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+
+
+def stem_spanish_tokens(text: str) -> list[str]:
+    """Reduce flexiones comunes del español para reconocer singular/plural y verbos."""
+    normalized = normalize(text)
+    return [SPANISH_STEMMER.stem(token) for token in TOKEN_PATTERN.findall(normalized)]
 
 
 def load_json(path: Path, description: str) -> dict:
@@ -373,11 +383,21 @@ def main() -> int:
 
         probabilities = classifier.predict_proba([query])[0]
         class_names = classifier.classes_
-        best_index = int(probabilities.argmax())
+        ranked_indices = probabilities.argsort()[::-1]
+        best_index = int(ranked_indices[0])
+        second_index = int(ranked_indices[1])
         intent = str(class_names[best_index])
         score = float(probabilities[best_index])
-        if score < MIN_INTENT_SCORE:
-            print("Asistente: No reconocí la intención. Prueba con una consulta sobre inventario u opiniones.\n")
+        second_score = float(probabilities[second_index])
+
+        if score < MIN_INTENT_SCORE or (score - second_score) < MIN_INTENT_MARGIN:
+            first_intent = str(class_names[best_index])
+            second_intent = str(class_names[second_index])
+            print(
+                "Asistente: No puedo identificar la consulta con suficiente seguridad. "
+                f"¿Te refieres a '{first_intent}' o a '{second_intent}'? "
+                "Reformula la pregunta con más detalle.\\n"
+            )
             continue
 
         response = answer(query, intent, shelves, opinion_by_id)
