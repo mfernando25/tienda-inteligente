@@ -42,3 +42,6 @@ cv-lab/dataset/iteraciones/*/entrada/*
 !cv-lab/dataset/iteraciones/*/entrada/.gitkeep
 cv-lab/dataset/iteraciones/*/referencias/*
 !cv-lab/dataset/iteraciones/*/referencias/.gitkeep
+
+# Resultados locales del laboratorio de PLN
+nlp-lab/salida/
