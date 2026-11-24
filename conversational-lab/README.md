@@ -25,8 +25,8 @@ El asistente analiza por defecto el conjunto de cinco fotografías. No hace falt
 
 ~~~text
 ¿Qué producto tiene menor presencia en los anaqueles?
-¿Qué productos predominan en la exhibición?
-¿Qué productos no aparecen en la mayoría de los anaqueles?
+¿Qué productos predominan en la exhibición cuando los anaqueles están llenos?
+¿Qué productos faltan en más anaqueles?
 ¿Qué anaqueles están más llenos?
 ¿Cuánto espacio ocupa la leche en los anaqueles?
 ~~~
