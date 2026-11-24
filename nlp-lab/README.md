@@ -28,10 +28,11 @@ La columna `sentimiento_referencia` se reserva para evaluar la predicción. El m
 Utiliza el entorno independiente `.venv-sesion2` desde la raíz del repositorio. Instala las dependencias una sola vez:
 
 ~~~bash
+python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r nlp-lab/requirements.txt
 ~~~
 
-La primera inicialización de PySentimiento descarga el modelo preentrenado en español. Conviene realizar la instalación y esa primera descarga antes de la sesión de 60 minutos.
+PyTorch se instala en versión CPU, sin requerir GPU NVIDIA. La primera inicialización de PySentimiento descarga el modelo preentrenado en español. Conviene realizar la instalación y esa primera descarga antes de la sesión de 60 minutos.
 
 ## Ejecutar desde la raíz
 
