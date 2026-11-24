@@ -37,6 +37,8 @@ cv-lab/dataset/labels/*
 cv-lab/dataset/manifests/*
 !cv-lab/dataset/manifests/.gitkeep
 
-# Fotografías nuevas de evaluación por iteración (datos locales)
-cv-lab/dataset/iteraciones/iteracion_01/entrada/*
-!cv-lab/dataset/iteraciones/iteracion_01/entrada/.gitkeep
+# Fotografías y JSON de referencia de las evaluaciones (datos locales)
+cv-lab/dataset/iteraciones/*/entrada/*
+!cv-lab/dataset/iteraciones/*/entrada/.gitkeep
+cv-lab/dataset/iteraciones/*/referencias/*
+!cv-lab/dataset/iteraciones/*/referencias/.gitkeep
