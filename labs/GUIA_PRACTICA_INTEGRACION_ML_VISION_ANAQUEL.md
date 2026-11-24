@@ -3,11 +3,11 @@
 **Unidad 4 – Inteligencia de Negocios**  
 **Ejes 1 y 2:** Machine Learning y Visión por computadora.
 
-## Preparar el entorno y recuperar el trabajo
+## Preparar el entorno
 
-### Primera vez en una computadora
+### 1. Descargar el proyecto e instalar dependencias
 
-Desde Git Bash, ubicarse en la carpeta donde se guardarán los proyectos:
+Si es la primera vez, desde Git Bash:
 
 ~~~bash
 git clone https://github.com/mfernando25/tienda-inteligente.git
@@ -15,22 +15,20 @@ cd tienda-inteligente/cv-lab
 py -m venv .venv
 source .venv/Scripts/activate
 python -m pip install -r requirements.txt
-cd ..
 ~~~
 
-Al terminar, la terminal queda en la raíz del repositorio para continuar con el paso 1.
-
-### Si el repositorio ya está clonado
-
-Desde la carpeta raíz del repositorio:
+Si el repositorio ya está clonado, desde su carpeta raíz:
 
 ~~~bash
 git pull
 cd cv-lab
-source .venv/Scripts/activate
 ~~~
 
-Si la carpeta `.venv` ya no existe (por ejemplo, después de DeepFreeze), recrearla e instalar las dependencias:
+Activar el entorno virtual. Si todavía no existe, crearlo e instalar las dependencias:
+
+~~~bash
+source .venv/Scripts/activate
+~~~
 
 ~~~bash
 py -m venv .venv
@@ -38,36 +36,44 @@ source .venv/Scripts/activate
 python -m pip install -r requirements.txt
 ~~~
 
-### Respaldo para continuar después de DeepFreeze
+### 2. Copiar las fotografías y sus etiquetas
 
-Las carpetas `cv-lab/dataset/` y `cv-lab/salida_ml/` contienen datos y resultados locales: están excluidas de GitHub y no se recuperan con `git clone` ni con `git pull`. Guardar una copia fuera de la zona que DeepFreeze restaura.
+Copiar las 15 fotografías JPG originales en `cv-lab/dataset/images/raw/` y sus 15 JSON en `cv-lab/dataset/labels/`.
 
-Después de clonar o actualizar el repositorio, copiar las carpetas respaldadas a `cv-lab/`, conservando sus nombres y estructura. Según lo que se haya guardado:
-
-- **Se respaldaron `dataset/` y `salida_ml/`:** restaurar ambas carpetas. No es necesario preparar el dataset ni volver a entrenar; se puede continuar con la inferencia.
-- **Se respaldó todo `dataset/`, pero no `salida_ml/`:** si están presentes `images/crops/` y `manifests/recortes.csv`, ejecutar `python entrenar_modelo.py` para reconstruir el modelo.
-- **Solo se respaldaron las fotografías originales y sus JSON:** ubicarlos en `dataset/images/raw/` y `dataset/labels/`, respectivamente, con el mismo nombre base; ejecutar primero `python preparar_dataset.py` y después `python entrenar_modelo.py`.
-
-Para la inferencia de esta guía deben existir estos dos archivos del modelo:
+Cada pareja debe conservar el mismo nombre base:
 
 ~~~text
-cv-lab/salida_ml/modelo_hog_svm.yml
-cv-lab/salida_ml/modelo_hog_svm.json
+dataset/images/raw/captura_001.jpg
+dataset/labels/captura_001.json
 ~~~
 
-No basta con guardar únicamente el código del repositorio: las fotografías, etiquetas, recortes, manifiesto y modelo entrenado son archivos locales.
+Repetir el patrón hasta `captura_015`. No copiar aquí las fotografías nuevas de la iteración 01.
+
+### 3. Preparar el dataset y entrenar el modelo
+
+Desde `cv-lab/`, ejecutar:
+
+~~~bash
+python preparar_dataset.py
+python entrenar_modelo.py
+~~~
+
+El primer programa solicita seleccionar las cuatro esquinas de cada anaquel y genera los 480 recortes etiquetados. El segundo entrena y evalúa HOG + SVM y guarda el modelo en `salida_ml/`.
+
+Al finalizar, deben existir:
+
+~~~text
+salida_ml/modelo_hog_svm.yml
+salida_ml/modelo_hog_svm.json
+~~~
+
+Con esto queda listo el modelo que se utilizará en la Iteración 01. Todos los pasos y archivos de esta práctica se trabajan durante la misma sesión; no se incluye un procedimiento de respaldo o recuperación posterior.
 
 ---
 
 ## Punto de partida
 
-En la práctica anterior cada grupo ya:
-
-- Generó 15 fotografías y sus JSON.
-- Preparó los 480 recortes con `preparar_dataset.py`.
-- Entrenó HOG + SVM con `entrenar_modelo.py`.
-
-**No repetir esos pasos ni volver a entrenar el modelo.** Esta práctica utiliza el modelo que ya está guardado en `cv-lab/salida_ml/`.
+Al inicio de esta guía se prepara el dataset a partir de 15 fotografías JPG y sus JSON, y se entrena el modelo HOG + SVM. Después, se utilizará ese modelo para clasificar 15 anaqueles nuevos.
 
 ## 1. Actualizar el repositorio
 
