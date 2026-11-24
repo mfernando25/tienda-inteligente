@@ -207,12 +207,11 @@ def answer_most_present(shelves: list[dict]) -> str:
         if item["positions"] == maximum
     ]
     total_occupied = sum(item["positions"] for item in summary.values())
-    share = maximum / total_occupied * 100 if total_occupied else 0.0
+    collective_share = (maximum * len(leaders) / total_occupied * 100) if total_occupied else 0.0
     return (
         "Productos con mayor presencia en el conjunto de anaqueles: "
         + format_tied_products(leaders, "posiciones visibles")
-        + f". Cada categoría líder representa {share:.1f}% de las posiciones ocupadas"
-          " (considerando una categoría líder; el porcentaje conjunto aumenta si hay empate)."
+        + f". En conjunto representan {collective_share:.1f}% de las posiciones ocupadas."
     )
 
 
@@ -224,9 +223,13 @@ def answer_most_absent(shelves: list[dict]) -> str:
         for product_id, item in summary.items()
         if item["absent_shelves"] == maximum
     ]
+    details = "; ".join(
+        f"{PRODUCTS[product_id]['name']} (ausente en {value} de {len(shelves)} anaqueles)"
+        for product_id, value in leaders
+    )
     return (
         "Productos que no aparecen en más anaqueles: "
-        + format_tied_products(leaders, f"de {len(shelves)} anaqueles")
+        + details
         + ". Esto indica ausencia en las fotografías analizadas, no falta de stock en almacén."
     )
 
@@ -330,11 +333,19 @@ def respond(query: str, shelves: list[dict],
         "mayor", "lleno", "llenos", "vacio", "vacios", "completo", "completos",
     )
 
-    missing_terms = ("falta", "faltan", "ausente", "ausentes", "no aparece", "no aparecen")
-    least_terms = ("menos", "menor", "escasea", "escasos", "escasas", "poca presencia")
+    missing_terms = (
+        "falta", "faltan", "ausente", "ausentes", "no aparece", "no aparecen",
+        "no hay", "no se encuentra", "no se encuentran",
+    )
+    least_terms = (
+        "menos", "menor", "escasea", "escasos", "escasas",
+        "poca presencia", "menos presente", "menor presencia",
+    )
     most_terms = (
         "predomina", "predominan", "prepondera", "preponderan", "abunda", "abundan",
-        "mayor presencia", "mas presencia", "mas exhibido", "mas exhibidos",
+        "mayor presencia", "mas presencia", "mas presente", "mas presentes",
+        "mas exhibido", "mas exhibidos", "mas frecuente", "mas frecuentes",
+        "mas se repite", "mas repetido",
     )
     time_terms = ("tiempo", "desde cuando", "desde hace", "hace cuanto", "dias", "semanas", "meses")
     fullness_terms = ("lleno", "llenos", "vacio", "vacios", "ocupacion", "ocupado", "ocupados")
