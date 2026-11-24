@@ -90,7 +90,7 @@ Ejecuta desde la raíz del repositorio:
 python conversational-lab/src/asistente_tienda.py
 ~~~
 
-Al iniciar, el chatbot entrena un clasificador con las preguntas etiquetadas de **conversational-lab → dataset → intenciones.csv**.
+Al iniciar, el chatbot separa el 25% de las preguntas etiquetadas para una validación inicial, muestra accuracy y F1 macro, y luego entrena el clasificador final con todos los ejemplos de **conversational-lab → dataset → intenciones.csv**. Como el conjunto es pequeño, interpreta las métricas como una estimación inicial, no como garantía de que reconocerá cualquier pregunta.
 
 ### ¿Cómo reconoce las preguntas?
 
@@ -143,7 +143,7 @@ Abre **conversational-lab → dataset → intenciones.csv** en VS Code.
 3. Guarda el archivo y reinicia el chatbot para que vuelva a entrenarse con los nuevos ejemplos.
 4. Prueba una pregunta nueva y observa qué intención detecta y qué puntaje devuelve.
 
-Esta actividad permite comprobar que el clasificador aprende de los ejemplos etiquetados. Si una pregunta está muy alejada de las expresiones de entrenamiento, puede clasificarla incorrectamente; por eso se deben ampliar y evaluar sus ejemplos.
+Esta actividad permite comprobar que el clasificador aprende de los ejemplos etiquetados. Tras añadir preguntas, las métricas de validación pueden variar. Si una pregunta está muy alejada de las expresiones de entrenamiento, puede clasificarla incorrectamente; por eso se deben ampliar y evaluar sus ejemplos.
 
 ## 4. Distribución de la práctica (60 minutos)
 
@@ -152,7 +152,7 @@ Esta actividad permite comprobar que el clasificador aprende de los ejemplos eti
 | 0–5 min | Conectar los resultados de visión artificial con la nueva funcionalidad de la tienda. |
 | 5–15 min | Explorar normalización y tokenización de comentarios. |
 | 15–27 min | Ejecutar el análisis de sentimientos y revisar desacuerdos. |
-| 27–45 min | Entrenar, ampliar y probar el clasificador de intenciones. |
+| 27–45 min | Evaluar, ampliar y volver a entrenar el clasificador de intenciones. |
 | 45–55 min | Consultar inventario y opiniones desde el chatbot. |
 | 55–60 min | Interpretar resultados y discutir limitaciones. |
 
