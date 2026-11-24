@@ -7,7 +7,6 @@ import csv
 import json
 import re
 import unicodedata
-from collections import Counter
 from pathlib import Path
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -198,7 +197,9 @@ def answer_absences(shelves: list[dict]) -> str:
 
 
 def answer_occupancy(shelves: list[dict], query: str) -> str:
-    want_empty = any(term in normalize(query) for term in ("vacio", "vacios", "libre", "libres"))
+    want_empty = any(term in normalize(query) for term in (
+        "vacio", "vacios", "libre", "libres", "disponible", "disponibles",
+    ))
     ranked = sorted(
         shelves,
         key=lambda shelf: (
