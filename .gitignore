@@ -11,6 +11,7 @@ desktop.ini
 __pycache__/
 *.py[cod]
 .venv/
+.venv-sesion2/
 venv/
 .env
 
